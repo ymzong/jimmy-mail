@@ -1,0 +1,30 @@
+DEL 330     delete email
+q 113       quit mode
+r 114       reply
+a 97        archive
+s 115       seen/unseen
+UP 259      go up email
+DOWN 258    go down email
+LEFT 260    go previous email
+RIGHT 261   go next email
+PgUp 339    go previous page
+PgDn 338    go next page
+
+
+
+Total Cols: maxX - 2
+
+1 -> New (N)
+2 -> Flagged (F)
+3 -> Replied (R)
+4 -> Urgent  (U)
+5 -> Space (.)
+6 to (5+MaxDigit) -> Mail No. (.xx)
+6+MaxDigit -> Space (.)
+7+MaxDigit to 15+MaxDigit -> MMM.DD'YY
+16+MaxDigit -> Space (.)
+17+MaxDigit to 17+MaxDigit+(x-1) -> Name/Email (xxxxxx)
+17+MaxDigit+x -> Space (.)
+18+MaxDigit+x to 22+MaxDigit+x -> Size (xxx)
+23+MaxDigit+x -> Space (.)
+24+MaxDigit+x -> 23+MaxDigit+3x -> Title of Msg (xxxxxxxxxxxx)
