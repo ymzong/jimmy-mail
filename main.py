@@ -1,10 +1,5 @@
 #!/usr/bin/env python
 
-# TODO:
-# Story-board
-# Different?
-# Due SUNDAY
-# 
 # FEATURES:
 # GROUP, IMPORT, TRASH, ... ...
 # HUMAN LANGUAGE INTERPRETER
@@ -20,6 +15,10 @@ from appdata import *                       # Application constants
 from mailbox import MailBoxIMAP, MailBoxSMTP, MailSession # Self-defined mailbox classes
 from misc import *                          # Miscellaneous Functions
 from IOControl import *
+import locale
+locale.setlocale(locale.LC_ALL,"en_US.UTF-8")
+reload(sys)
+sys.setdefaultencoding("utf-8")
 #import readline
 
 def run(win, MainSession):
@@ -59,6 +58,7 @@ def init():
     print WAIT_FOR_ENTER; tmp = raw_input()
     runWithSession = lambda win : run(win, MainSession)
     curses.wrapper(runWithSession)
+    MainSession.close()
 
 init()
 

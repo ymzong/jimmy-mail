@@ -98,6 +98,8 @@ class MailBoxIMAP(object):
             return self.session.fetch(str(msgID), "(BODY.PEEK[HEADER] FLAGS)")
         elif arg == "FLAG":
             return self.session.fetch(str(msgID), "FLAGS")
+        elif arg == "SIZE":
+            return self.session.fetch(str(msgID), "RFC822.SIZE")
         elif arg == "ALL":
             return self.session.fetch(str(msgID), "(RFC822)")
 

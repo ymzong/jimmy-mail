@@ -7,8 +7,11 @@ from misc import *
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.parser import Parser
-from email.header import decode_header
+from email.header import decode_header as Decode
+import email.utils
 import imaplib
+import locale
+locale.setlocale(locale.LC_ALL,"en_US.UTF-8")
 
 ############################# KEY RESPOND UNIT #########################
 keyResponse = dict()
@@ -234,69 +237,101 @@ def displayResult(MainSession, searchStr, stdscr):
             raw_input("\nPress ENTER to proceed to the search result...")
             emailLister(MainSession, msgNOs, stdscr)
 
+# Entries Per Page: MaxY - 5
 def emailLister(MainSession, msgNOs, stdscr):
     curses.def_shell_mode(); curses.reset_prog_mode()    # Back to curses
     curses.curs_set(0); stdscr.clear(); stdscr.refresh()
     maxY, maxX = stdscr.getmaxyx()
+    maxDigit = digitNo(len(msgNOs))
     stdscr.clear(); stdscr.box()
     stdscr.addstr(0, max(0, (maxX - len(JIMMY_MAIL)) / 2), JIMMY_MAIL)
     stdscr.addstr(min(2,maxY-1), max(0, (maxX - len(PLEASE_WAIT)) / 2),     PLEASE_WAIT)
     stdscr.refresh()
     emlData = fetchList(MainSession, msgNOs, stdscr)
-    event, currentTop, currentSelect = None, 1, 1
-    while True:
+    flag, event, currentTop, currentSelect = True, None, 0, 0
+    while flag:
         maxY, maxX = stdscr.getmaxyx()
-        stdscr.clear()
-        stdscr.box()
+        stdscr.clear(); stdscr.box()
         stdscr.addstr(0, max(0, (maxX - len(JIMMY_MAIL)) / 2), JIMMY_MAIL)
         stdscr.addstr(min(2,maxY-1), max(0, (maxX - len(PLEASE_WAIT)) / 2), PLEASE_WAIT)
         drawList(MainSession, stdscr, emlData, currentTop, currentSelect)
         event = stdscr.getch()
-        if event == ord('q'): break
-        #if event in [10, curses.KEY_UP, curses.KEY_DOWN,:
-        #    sys.exit("123")
-        #stdscr.refresh()
+        if event in [ord('q'),curses.KEY_UP,curses.KEY_DOWN,curses.KEY_PPAGE,curses.KEY_NPAGE,10,13]:
+            (flag, event, currentSelect, currentTop, maxY, msgNOs) =\
+                    respondGeneral(flag, event, currentSelect, currentTop, maxY, msgNOs)
     stdscr.clear(); stdscr.refresh()
     curses.reset_shell_mode(); curses.curs_set(1)
+
+def respondGeneral(flag, event, currentSelect, currentTop, maxY, msgNOs):
+    if event == ord('q'): flag = False
+    elif event == curses.KEY_UP:
+        if currentSelect - currentTop > 0:   currentSelect -= 1
+        elif currentTop > 0:    currentTop -= 1; currentSelect -= 1
+    elif event == curses.KEY_DOWN:
+        if currentSelect < currentTop + maxY - 6: currentSelect += 1
+        elif (len(msgNOs) > currentSelect + 1):
+            currentTop += (maxY - 6)
+            currentSelect += 1
+    elif event == curses.KEY_PPAGE: # PageUp
+        if currentTop == 0: currentSelect = 0
+        else:
+            newTop = max(currentTop - maxY / 2, 0)
+            currentSelect -= currentTop - newTop
+            currentTop = newTop
+    elif event == curses.KEY_NPAGE: # PageDn
+        if currentTop + maxY - 5 >= len(msgNOs):
+            currentSelect = len(msgNOs)
+        else:
+            newTop = min(currentTop + maxY / 2, len(msgNOs) - 1)
+            currentSelect += newTop - currentTop
+            currentTop = newTop
+    return (flag, event, currentSelect, currentTop, maxY, msgNOs)
 
 def drawList(MainSession, stdscr, emlData, currentTop, currentSelect):
     maxY, maxX = stdscr.getmaxyx()
     for i in xrange(0, maxY - 5):
         if i != currentSelect - currentTop:
-            fontStyle = curses.A_STANDOUT
-        else:
             fontStyle = curses.A_NORMAL
-        stdscr.addstr(min(maxY - 1, i + 2), 1, getInfoStr(emlData, currentTop+i, maxX - 2))
+        else:
+            fontStyle = curses.A_REVERSE
+        stdscr.addstr(min(maxY - 1, i + 2), 1, getInfoStr(MainSession, emlData, currentTop+i, maxX - 2), fontStyle)
+        #title = Decode(emlData[0][currentTop+i]["Subject"])[0][0]
+        #stdscr.addstr(min(maxY-1,i+2),10, title[:maxX - 12], fontStyle)
         #stdscr.addstr(min(maxY - 1, i + 2), 10, unicode(*decode_header(emlData[0][currentTop+i]["Subject"])[0]) if )
         #stdscr.addstr(min(maxY - 1, i + 2), 10, str(len(getInfoStr(emlData, currentTop+i, maxX - 2))))
 
-        # stdscr.getch()
-
-def getInfoStr(emlData, currentIndex, strLen):
-    emlHeader, emlFlg, toDisplayNOs = emlData
-    currentEml = (emlHeader[currentIndex], emlFlg[currentIndex])
-    emlString = list(" " * 1000)
-    emlFlg = emlFlg[currentIndex].lower()
-    emlHead = emlHeader[currentIndex]
-    if emlFlg.find("flagged") == -1:    emlString[1] = "F"
-    if emlFlg.find("seen") != -1:       emlString[0] = "N"
-    if emlFlg.find("answered") == -1:   emlString[2] = "R"
-    title = decode_header(emlData[0][currentIndex]["Subject"])
-    title = title[0][0] #)if title[0][1] == None else title[0][0].encode(title[0][1])
-    emlString[10:] = list(title)
+def getInfoStr(MainSession, emlData, currentIndex, strLen):
+    emlHeader, emlFlg, emlSize, toDisplayNOs = emlData
+    maxDigit = digitNo(len(emlFlg) + 1)
+    if currentIndex >= len(emlData[0]): return "~"
+    currentEml = (emlHeader[currentIndex], emlFlg[currentIndex], emlSize[currentIndex])
+    emlString = [" "] * 4 
+    emlFlg = currentEml[1].lower()
+    if emlFlg.find("flagged") != -1:    emlString[1] ="F"
+    if emlFlg.find("seen") == -1:       emlString[0] = "N"
+    if emlFlg.find("answered") != -1:   emlString[2] = "R"
+    emlString = "".join(emlString)
+    emlString += (" " * (maxDigit - digitNo(currentIndex + 1)) +
+            str(currentIndex + 1) + " " +
+            convertDate(currentEml[0]["Date"]) + "   " +
+            strSpan(decodeHeader(displayEml(currentEml[0]["From"])),
+                (strLen-21-maxDigit)/3) + " " +
+            sizeString(currentEml[2]) + " " + 
+            strSpan(decodeHeader(currentEml[0]["Subject"]), strLen))
     return "".join(emlString)[:strLen]
-
 
 def fetchList(MainSession, msgNOs, stdscr):
     maxY, maxX = stdscr.getmaxyx()
     toDisplayNOs = list(reversed(msgNOs))
     emlHeader = [None] * len(toDisplayNOs)
     emlFlg = [None] * len(toDisplayNOs)
+    emlSize = [None] * len(toDisplayNOs)
     for msgIndex in xrange(len(toDisplayNOs)):
         emlHeader[msgIndex] = MainSession.IMAP.fetchMsg(toDisplayNOs[msgIndex], "PREVIEW")[1][0][1]
         emlHeader[msgIndex] = Parser().parsestr(emlHeader[msgIndex])
         emlFlg[msgIndex] = MainSession.IMAP.fetchMsg(toDisplayNOs[msgIndex], "FLAG")[1][0]
-    return (emlHeader, emlFlg, toDisplayNOs)
+        emlSize[msgIndex] = MainSession.IMAP.fetchMsg(toDisplayNOs[msgIndex], "SIZE")[1][0][:-1].split()[-1]
+    return (emlHeader, emlFlg, emlSize, toDisplayNOs)
 
 # Controlling the prompt to obtain the Folder to search from.
 def getSourceFolder(MainSession):
