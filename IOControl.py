@@ -259,8 +259,18 @@ def emailLister(MainSession, msgNOs, stdscr):
         if event in [ord('q'),curses.KEY_UP,curses.KEY_DOWN,curses.KEY_PPAGE,curses.KEY_NPAGE,10,13]:
             (flag, event, currentSelect, currentTop, maxY, msgNOs) =\
                     respondGeneral(flag, event, currentSelect, currentTop, maxY, msgNOs)
+        elif event in [ord("D"), ord("r"), ord("f")]:
+            modifyEml(MainSession, emlData, msgNOs, currentSelect, event)
     stdscr.clear(); stdscr.refresh()
     curses.reset_shell_mode(); curses.curs_set(1)
+
+def modifyEml(MainSession, emlData, msgNOs, currentSelect, event):
+    if event == ord("D"):
+        MainSession.IMAP.removeMsg(str(msgNOs[currentSelect]))
+        msgNOs.pop(currentSelect)
+        for part in emlData:
+            part.pop(currentSelect)
+
 
 def respondGeneral(flag, event, currentSelect, currentTop, maxY, msgNOs):
     if event == ord('q'): flag = False
@@ -295,10 +305,6 @@ def drawList(MainSession, stdscr, emlData, currentTop, currentSelect):
         else:
             fontStyle = curses.A_REVERSE
         stdscr.addstr(min(maxY - 1, i + 2), 1, getInfoStr(MainSession, emlData, currentTop+i, maxX - 2), fontStyle)
-        #title = Decode(emlData[0][currentTop+i]["Subject"])[0][0]
-        #stdscr.addstr(min(maxY-1,i+2),10, title[:maxX - 12], fontStyle)
-        #stdscr.addstr(min(maxY - 1, i + 2), 10, unicode(*decode_header(emlData[0][currentTop+i]["Subject"])[0]) if )
-        #stdscr.addstr(min(maxY - 1, i + 2), 10, str(len(getInfoStr(emlData, currentTop+i, maxX - 2))))
 
 def getInfoStr(MainSession, emlData, currentIndex, strLen):
     emlHeader, emlFlg, emlSize, toDisplayNOs = emlData
@@ -317,7 +323,7 @@ def getInfoStr(MainSession, emlData, currentIndex, strLen):
             strSpan(decodeHeader(displayEml(currentEml[0]["From"])),
                 (strLen-21-maxDigit)/3) + " " +
             sizeString(currentEml[2]) + " " + 
-            strSpan(decodeHeader(currentEml[0]["Subject"]), strLen))
+            strSpan(decodeHeader(currentEml[0]["Subject"]).replace('\n', '').replace('\r', ''), strLen))
     return "".join(emlString)[:strLen]
 
 def fetchList(MainSession, msgNOs, stdscr):

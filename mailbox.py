@@ -44,7 +44,10 @@ class MailBoxIMAP(object):
         if Login_Success == True:
             self.session.select()
             print LOGIN_SUCCESS % (self.Username, self.Server)
-        else:   print CREDENTIAL_INVALID
+        else:
+            print CREDENTIAL_INVALID
+            self.session.logout()
+            sys.exit(THANK_YOU_MSG)
     
     def getInboxFolder(self):
         FolderList = self.session.list()[1]
@@ -132,7 +135,10 @@ class MailBoxSMTP(object):
             else: Login_Success = True
         if Login_Success == True:
             print LOGIN_SUCCESS % (self.Username, serv_name)
-        else:   print CREDENTIAL_INVALID
+        else:
+            print CREDENTIAL_INVALID
+            self.session.quit()
+            sys.exit(THANK_YOU_MSG)
 
     def close(self):
         self.session.quit()
