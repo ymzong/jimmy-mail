@@ -28,3 +28,7 @@ Total Cols: maxX - 2
 18+MaxDigit+x to 22+MaxDigit+x -> Size (xxx)
 23+MaxDigit+x -> Space (.)
 24+MaxDigit+x -> 23+MaxDigit+3x -> Title of Msg (xxxxxxxxxxxx)
+
+Need 23+MaxDigit+3x=maxX-2
+     25+MaxDigit+3x=maxX
+                  x=(maxX-25-MaxDigit)/3
