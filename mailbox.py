@@ -49,10 +49,25 @@ class MailBoxIMAP(object):
             self.session.logout()
             sys.exit(THANK_YOU_MSG)
     
-    def setFlagged(self, flagStatus, msgNo):
-        if flagStatus.find("\\Flagged") != -1:
-            newFlag = flagStatus.replace("\\Flagged","")
-            self.session.store(msgNo, '-FLAGS', '\\Flagged')
+    def setFlagged(self, msgNo, msgStatus):
+        if msgStatus.find("\\Flagged") != -1:
+            newFlag = msgStatus.replace("\\Flagged","")
+            self.session.store(str(msgNo), '-FLAGS', '\\Flagged')
+        else:
+            newFlag = msgStatus + "\\Flagged"
+            self.session.store(str(msgNo), "+FLAGS", "\\Flagged")
+        return newFlag
+
+    def setDelete(self, msgNo, emlData):
+        try:
+            self.session.copy(str(msgNo), self.getTrashFolder())
+        except Exception: return False
+        else: return True
+
+    def setPurge(self, msgNo):
+        self.session.store(str(msgNo), "+FLAGS", "\\Deleted")
+        self.session.expunge()
+
     def getInboxFolder(self):
         FolderList = self.session.list()[1]
         for folder in FolderList:
@@ -80,7 +95,25 @@ class MailBoxIMAP(object):
             if parseListResponse(folder.lower())[2].find("sent") != -1:
                 sentFolders.append(parseListResponse(folder)[2])
         return sentFolders
-    
+
+    def getTrashFolder(self):
+        trashFolder = ""
+        if self.Server == "imap.andrew.cmu.edu":
+            FolderList = self.session.list("INBOX")[1]
+            isGoogle = False
+        elif self.Server == "imap.gmail.com" or self.Server == "imap.googlemail.com":
+            FolderList = self.session.list("")[1]
+            isGoogle = True
+        else:
+            FolderList = self.session.list("")[1]
+            isGoogle = False
+        for folder in FolderList:
+            if not isGoogle:
+                if folder.lower().find("trash") != -1 or folder.lower().find("deleted") != -1:
+                    return parseListResponse(folder)[2]
+            elif folder.lower().find("\\all") != -1:
+                return parseListResponse(folder)[2]
+
     def setSentFolder(self):
         selections = self.getSentFolder()
         if len(selections) == 0:

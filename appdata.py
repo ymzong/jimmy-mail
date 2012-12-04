@@ -55,4 +55,10 @@ INSTRUCTIONS = ["Welcome to use Jimmy-Mail!",
 PLEASE_WAIT = "Loading email headers, please wait..."
 
 INSTRUCT1 = ["Arrow Keys -  Move thru Email List   f - Flag/Unflag Msg",
-             "ENTER - Read Mail   D (CAPITAL D) - Delete Mail   r - Reply Email"]
+             "SPACE/ENTER - Read Mail   D (CAPITAL D) - Delete Mail   r - Reply Email"]
+
+INSTRUCT_MSG = ["Arrow Keys - Move along Email   f - Flag/Unflag Msg",
+                "D (CAPITAL D) - Delete Mail   r - Reply Email   q - Quit to Parent Folder"]
+EOM = "### END OF EMAIL TEXT ###"
+
+

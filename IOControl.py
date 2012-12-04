@@ -9,9 +9,11 @@ from email.mime.text import MIMEText
 from email.parser import Parser
 from email.header import decode_header as Decode
 import email.utils
+from email import message_from_string as Proc
 import imaplib
 import locale
 locale.setlocale(locale.LC_ALL,"en_US.UTF-8")
+from html2text import html2text
 
 ############################# KEY RESPOND UNIT #########################
 keyResponse = dict()
@@ -152,7 +154,7 @@ def sendMailApp(MainSession):
     EmailMIME["To"] = ";".join(EmailTo)
     EmailMIME["Subject"] = EmailTitle
     try: MainSession.SMTP.session.sendmail(MainSession.Email_Addr, EmailTo, EmailMIME.as_string())
-    except Exception: print "An error occured during sending."
+    except Exception as err: print "An error occured during sending.", err
     else:
         choice = raw_input("\nEmail Sent to " + ",".join(EmailTo) + "! Save a copy to Sent Folder? (y/n)")
         while True:
@@ -191,7 +193,7 @@ def searchMailApp(MainSession, stdscr):
     curses.curs_set(1)
     print "Please enter searching criteria as follows."
     print "Press ENTER to skip the option."
-    print "Enter \"#q#\" to quit to Smart-Command mode."
+    print "Enter \"#q#\" to quit to Smart Command-Line mode."
     print "Enter \"#f#\" to perform searching with existing criteria."
     sCriteria = list()
     sCriteria.append(getSourceFolder(MainSession))
@@ -252,31 +254,105 @@ def emailLister(MainSession, msgNOs, stdscr):
     while flag:
         maxY, maxX = stdscr.getmaxyx(); stdscr.clear(); stdscr.box()
         stdscr.addstr(0, max(0, (maxX - len(JIMMY_MAIL)) / 2), JIMMY_MAIL)
-        stdscr.addstr(min(2,maxY-1),max(0,(maxX-len(PLEASE_WAIT))/2),PLEASE_WAIT)
         drawList(MainSession, stdscr, emlData, currentTop, currentSelect)
         drawInstruction(MainSession, stdscr)
         event = stdscr.getch()
-        if event in [ord('q'),ord('Q'),curses.KEY_UP,curses.KEY_DOWN,curses.KEY_PPAGE,curses.KEY_NPAGE,10,13]:
+        if event in [ord('q'),ord('Q'),curses.KEY_UP,curses.KEY_DOWN,curses.KEY_PPAGE,curses.KEY_NPAGE]:
             (flag, event, currentSelect, currentTop, maxY, msgNOs) =\
               respondGeneral(flag,event,currentSelect,currentTop,maxY,msgNOs)
         elif event in [ord("D"), ord("r"), ord("R"), ord("F"), ord("f")]:
-            modifyEml(MainSession, emlData, msgNOs, currentSelect, event)
+            (emlData, msgNOs) = modifyEml(MainSession, emlData, msgNOs, currentSelect, event)
+        elif event in [ord(" "), 10, 13, ord("\n"), curses.KEY_ENTER]:
+            try:
+                emlData[1][currentSelect] = setRead(emlData[1][currentSelect])
+                viewEmail(MainSession, emlData, msgNOs, currentSelect, stdscr)
+            except Exception: pass
     stdscr.clear(); stdscr.refresh()
     curses.reset_shell_mode(); curses.curs_set(1)
+
+def setRead(inFlags):
+    if inFlags.find("\\Seen") == -1:
+        inFlags += "\\Seen"
+    return inFlags
+
+def viewEmail(MainSession, emlData, msgNOs, currentSelect, stdscr):
+    curses.def_prog_mode()
+    curses.curs_set(0); stdscr.clear(); stdscr.refresh()
+    maxY, maxX = stdscr.getmaxyx()
+    stdscr.clear(); stdscr.box()
+    stdscr.addstr(0, max(0, (maxX - len(JIMMY_MAIL)) / 2), JIMMY_MAIL)
+    stdscr.addstr(min(2,maxY-1),max(0,(maxX-len(PLEASE_WAIT))/2),PLEASE_WAIT)
+    stdscr.refresh(); txtMsg = None
+    msgCodec = Proc(MainSession.IMAP.fetchMsg(emlData[3][currentSelect])[1][0][1])
+    for part in msgCodec.walk():
+        if part.get_content_type() == "text/plain": txtMsg = part.get_payload().replace("\r","") + EOM
+    if txtMsg == None: txtMsg = html2text(list(msgCodec.walk())[0].get_payload())
+    (flag,event,currentTop)=(True, None, 0)
+    while flag:
+        maxY, maxX = stdscr.getmaxyx()
+        stdscr.clear(); stdscr.box()
+        stdscr.addstr(0, max(0, (maxX - len(JIMMY_MAIL)) / 2), JIMMY_MAIL)
+        stdscr.refresh();
+        maxLen = len(txtMsg) / (maxX - 2) + txtMsg.count("\n") + 1 
+        coord = (6, 1, maxY - 4, maxX - 1)
+        pad = curses.newpad(maxLen, maxX - 2)
+        pad.clear(); pad.refresh(currentTop,0,*coord)
+        stdscr.addstr(0, max(0, (maxX - len(JIMMY_MAIL)) / 2), JIMMY_MAIL)
+        drawBasicInfo(MainSession, emlData, currentSelect, stdscr)
+        pad.addstr(0,0, txtMsg)
+        try: pad.refresh(currentTop, 0, *coord)
+        except: pass
+        event = stdscr.getch()      # Get Keyboard Inputs
+        if event in [ord('q'),ord('Q'),curses.KEY_UP,curses.KEY_DOWN,curses.KEY_PPAGE,curses.KEY_NPAGE]:
+            (flag, currentTop) = respondMsgPg(flag,event,currentTop,maxY,maxLen)
+        elif event in [ord("D"), ord("r"), ord("R"), ord("F"), ord("f")]:
+            (emlData, msgNOs) = modifyEml(MainSession, emlData, msgNOs, currentSelect, event)
+            if event == ord("D"): flag = False   # Quite Email Viewing
+
+def respondMsgPg(flag, event, currentTop, maxY, maxLen):
+    if event == ord('q') or event == ord('Q'):
+        flag = False
+    else:
+        currentTop -= (event == curses.KEY_UP)
+        currentTop += (event == curses.KEY_DOWN)
+        currentTop += (event == curses.KEY_NPAGE) * maxY / 3
+        currentTop -= (event == curses.KEY_PPAGE) * maxY / 3
+        currentTop = min(max(currentTop, 0), maxLen - 2)
+    return flag, currentTop
+
+def drawBasicInfo(MainSession, emlData, currentIndex, stdscr):
+    maxY, maxX = stdscr.getmaxyx()
+    for i in xrange(len(INSTRUCT_MSG)):
+        stdscr.addstr(max(maxY-len(INSTRUCT_MSG)+i-1, 0), 
+                max((maxX - len(INSTRUCT_MSG[i])) / 2, 0),INSTRUCT_MSG[i])
+    emlHeader, emlFlg, emlSize, toDisplayNOs = emlData
+    currentEml = (emlHeader[currentIndex], emlFlg[currentIndex],
+            emlSize[currentIndex])
+    stdscr.addstr(1,1,"Date: " + currentEml[0]["Date"])
+    stdscr.addstr(2,1,"From: " + currentEml[0]["From"])
+    stdscr.addstr(3,1,"To: " + currentEml[0]["To"])
+    stdscr.addstr(4,1,"Subject: " + currentEml[0]["Subject"])
+    stdscr.addstr(5,1,"*"*(maxX/3))
 
 def drawInstruction(MainSession, stdscr):
     for i in xrange(len(INSTRUCT1)):
         maxY, maxX = stdscr.getmaxyx()
-        stdscr.addstr(max(maxY-len(INSTRUCT1)+i-1, 0), 
+        stdscr.addstr(max(maxY-len(INSTRUCT1)+i-1, 0),
                 max((maxX - len(INSTRUCT1[i])) / 2, 0),INSTRUCT1[i])
 
 def modifyEml(MainSession, emlData, msgNOs, currentSelect, event):
     if event == ord("f") or event == ord("F"):
-        MainSession.IMAP.addFlg(emlData[1][currentSelect], emlData[3][currentSelect])
-        #msgNOs.pop(currentSelect)
-        #for part in emlData:
-        #    part.pop(currentSelect)
-        emlData[1][currentSelect].replace("\\Flagged","")
+        emlData[1][currentSelect] = MainSession.IMAP.setFlagged(emlData[3][currentSelect],
+                emlData[1][currentSelect])
+    elif event == ord("D"):
+        originalMsgNo = emlData[3][currentSelect]
+        succeed = MainSession.IMAP.setDelete(originalMsgNo, emlData)
+        if succeed == True:
+            msgNOs.pop(currentSelect)
+            for part in emlData:
+                part.pop(currentSelect)
+            MainSession.IMAP.setPurge(originalMsgNo)
+    return emlData, msgNOs
 
 def respondGeneral(flag, event, currentSelect, currentTop, maxY, msgNOs):
     if event == ord('q') or event == ord('Q'): flag = False
@@ -359,7 +435,6 @@ def getSourceFolder(MainSession):
         elif SourceFolder == "#l#":
             print "Following are the searchable folders:", MainSession.IMAP.getFolderList()
             print
-    
         else: print "Folder not found.",
         SourceFolder = raw_input("Please enter the folder you want to search from: ")
     print
