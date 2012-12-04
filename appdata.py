@@ -1,3 +1,9 @@
+ARG_USAGE = ("Welcome to use Jimmy-Mail! (Smart enough to discover this " +
+             "function!)\nUsage: python main.py" + " " * 21 + "Run Jimmy-" +
+             "Mail in Traditional Mode\n" + " " * 7 + "python main.py [Email Address]     " +
+             "Attempt to login using the given email address.\n" + " " * 7 +
+             "python main.py help" + " " * 16 + "Display this help " + 
+             "message again.\n")
 THANK_YOU_MSG = "\nThank you for using Jimmy-Mail. :-)"
 WELCOME_MSG = [None, None, None, None, None, None]
 WELCOME_MSG[0] = "Hello, welcome to use Jimmy-Mail!"
@@ -47,3 +53,6 @@ INSTRUCTIONS = ["Welcome to use Jimmy-Mail!",
                 "q/quit: Exit Jimmy-Mail  |  h/help/?: Display this help again", ""]
 
 PLEASE_WAIT = "Loading email headers, please wait..."
+
+INSTRUCT1 = ["Arrow Keys -  Move thru Email List   f - Flag/Unflag Msg",
+             "ENTER - Read Mail   D (CAPITAL D) - Delete Mail   r - Reply Email"]

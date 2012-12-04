@@ -49,6 +49,10 @@ class MailBoxIMAP(object):
             self.session.logout()
             sys.exit(THANK_YOU_MSG)
     
+    def setFlagged(self, flagStatus, msgNo):
+        if flagStatus.find("\\Flagged") != -1:
+            newFlag = flagStatus.replace("\\Flagged","")
+            self.session.store(msgNo, '-FLAGS', '\\Flagged')
     def getInboxFolder(self):
         FolderList = self.session.list()[1]
         for folder in FolderList:

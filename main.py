@@ -47,6 +47,12 @@ def init():
     #readline.parse_and_bind('tab: complete')    # Tab Completion
     #readline.parse_and_bind('set editing-mode vi')  # Arrow Key Support
     validEmail = False
+    if len(sys.argv) > 2 or (len(sys.argv) == 2 and
+            not isValidEmail(sys.argv[1].lower())):
+        print ARG_USAGE
+        sys.exit(0)
+    elif len(sys.argv) == 2 and isValidEmail(sys.argv[1].lower()):
+        validEmail, EmailAddr = True, sys.argv[1].lower()
     while not validEmail:
         EmailAddr = raw_input(EMAIL_PROMPT)
         validEmail = isValidEmail(EmailAddr)

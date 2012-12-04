@@ -242,59 +242,62 @@ def emailLister(MainSession, msgNOs, stdscr):
     curses.def_shell_mode(); curses.reset_prog_mode()    # Back to curses
     curses.curs_set(0); stdscr.clear(); stdscr.refresh()
     maxY, maxX = stdscr.getmaxyx()
-    maxDigit = digitNo(len(msgNOs))
     stdscr.clear(); stdscr.box()
     stdscr.addstr(0, max(0, (maxX - len(JIMMY_MAIL)) / 2), JIMMY_MAIL)
-    stdscr.addstr(min(2,maxY-1), max(0, (maxX - len(PLEASE_WAIT)) / 2),     PLEASE_WAIT)
+    stdscr.addstr(min(2,maxY-1),max(0,(maxX-len(PLEASE_WAIT))/2),PLEASE_WAIT)
     stdscr.refresh()
     emlData = fetchList(MainSession, msgNOs, stdscr)
-    flag, event, currentTop, currentSelect = True, None, 0, 0
+    (maxDigit,flag,event,currentTop,currentSelect)=(digitNo(len(msgNOs)),
+            True, None, 0, 0)
     while flag:
-        maxY, maxX = stdscr.getmaxyx()
-        stdscr.clear(); stdscr.box()
+        maxY, maxX = stdscr.getmaxyx(); stdscr.clear(); stdscr.box()
         stdscr.addstr(0, max(0, (maxX - len(JIMMY_MAIL)) / 2), JIMMY_MAIL)
-        stdscr.addstr(min(2,maxY-1), max(0, (maxX - len(PLEASE_WAIT)) / 2), PLEASE_WAIT)
+        stdscr.addstr(min(2,maxY-1),max(0,(maxX-len(PLEASE_WAIT))/2),PLEASE_WAIT)
         drawList(MainSession, stdscr, emlData, currentTop, currentSelect)
+        drawInstruction(MainSession, stdscr)
         event = stdscr.getch()
-        if event in [ord('q'),curses.KEY_UP,curses.KEY_DOWN,curses.KEY_PPAGE,curses.KEY_NPAGE,10,13]:
+        if event in [ord('q'),ord('Q'),curses.KEY_UP,curses.KEY_DOWN,curses.KEY_PPAGE,curses.KEY_NPAGE,10,13]:
             (flag, event, currentSelect, currentTop, maxY, msgNOs) =\
-                    respondGeneral(flag, event, currentSelect, currentTop, maxY, msgNOs)
-        elif event in [ord("D"), ord("r"), ord("f")]:
+              respondGeneral(flag,event,currentSelect,currentTop,maxY,msgNOs)
+        elif event in [ord("D"), ord("r"), ord("R"), ord("F"), ord("f")]:
             modifyEml(MainSession, emlData, msgNOs, currentSelect, event)
     stdscr.clear(); stdscr.refresh()
     curses.reset_shell_mode(); curses.curs_set(1)
 
-def modifyEml(MainSession, emlData, msgNOs, currentSelect, event):
-    if event == ord("D"):
-        MainSession.IMAP.removeMsg(str(msgNOs[currentSelect]))
-        msgNOs.pop(currentSelect)
-        for part in emlData:
-            part.pop(currentSelect)
+def drawInstruction(MainSession, stdscr):
+    for i in xrange(len(INSTRUCT1)):
+        maxY, maxX = stdscr.getmaxyx()
+        stdscr.addstr(max(maxY-len(INSTRUCT1)+i-1, 0), 
+                max((maxX - len(INSTRUCT1[i])) / 2, 0),INSTRUCT1[i])
 
+def modifyEml(MainSession, emlData, msgNOs, currentSelect, event):
+    if event == ord("f") or event == ord("F"):
+        MainSession.IMAP.addFlg(emlData[1][currentSelect], emlData[3][currentSelect])
+        #msgNOs.pop(currentSelect)
+        #for part in emlData:
+        #    part.pop(currentSelect)
+        emlData[1][currentSelect].replace("\\Flagged","")
 
 def respondGeneral(flag, event, currentSelect, currentTop, maxY, msgNOs):
-    if event == ord('q'): flag = False
+    if event == ord('q') or event == ord('Q'): flag = False
     elif event == curses.KEY_UP:
         if currentSelect - currentTop > 0:   currentSelect -= 1
         elif currentTop > 0:    currentTop -= 1; currentSelect -= 1
     elif event == curses.KEY_DOWN:
         if currentSelect < currentTop + maxY - 6: currentSelect += 1
         elif (len(msgNOs) > currentSelect + 1):
-            currentTop += (maxY - 6)
-            currentSelect += 1
+            currentTop += (maxY - 6); currentSelect += 1
     elif event == curses.KEY_PPAGE: # PageUp
         if currentTop == 0: currentSelect = 0
         else:
             newTop = max(currentTop - maxY / 2, 0)
-            currentSelect -= currentTop - newTop
-            currentTop = newTop
+            currentSelect -= currentTop - newTop; currentTop = newTop
     elif event == curses.KEY_NPAGE: # PageDn
         if currentTop + maxY - 5 >= len(msgNOs):
             currentSelect = len(msgNOs)
         else:
             newTop = min(currentTop + maxY / 2, len(msgNOs) - 1)
-            currentSelect += newTop - currentTop
-            currentTop = newTop
+            currentSelect += newTop - currentTop; currentTop = newTop
     return (flag, event, currentSelect, currentTop, maxY, msgNOs)
 
 def drawList(MainSession, stdscr, emlData, currentTop, currentSelect):
@@ -304,15 +307,16 @@ def drawList(MainSession, stdscr, emlData, currentTop, currentSelect):
             fontStyle = curses.A_NORMAL
         else:
             fontStyle = curses.A_REVERSE
-        stdscr.addstr(min(maxY - 1, i + 2), 1, getInfoStr(MainSession, emlData, currentTop+i, maxX - 2), fontStyle)
+        stdscr.addstr(min(maxY - 1, i + 2), 1, getInfoStr(MainSession,
+            emlData, currentTop+i, maxX - 2), fontStyle)
 
 def getInfoStr(MainSession, emlData, currentIndex, strLen):
     emlHeader, emlFlg, emlSize, toDisplayNOs = emlData
     maxDigit = digitNo(len(emlFlg) + 1)
     if currentIndex >= len(emlData[0]): return "~"
-    currentEml = (emlHeader[currentIndex], emlFlg[currentIndex], emlSize[currentIndex])
-    emlString = [" "] * 4 
-    emlFlg = currentEml[1].lower()
+    currentEml = (emlHeader[currentIndex], emlFlg[currentIndex],
+            emlSize[currentIndex])
+    emlString, emlFlg = [" "] * 4, currentEml[1].lower()
     if emlFlg.find("flagged") != -1:    emlString[1] ="F"
     if emlFlg.find("seen") == -1:       emlString[0] = "N"
     if emlFlg.find("answered") != -1:   emlString[2] = "R"
@@ -333,10 +337,13 @@ def fetchList(MainSession, msgNOs, stdscr):
     emlFlg = [None] * len(toDisplayNOs)
     emlSize = [None] * len(toDisplayNOs)
     for msgIndex in xrange(len(toDisplayNOs)):
-        emlHeader[msgIndex] = MainSession.IMAP.fetchMsg(toDisplayNOs[msgIndex], "PREVIEW")[1][0][1]
+        emlHeader[msgIndex]=MainSession.IMAP.fetchMsg(toDisplayNOs[msgIndex],
+                "PREVIEW")[1][0][1]
         emlHeader[msgIndex] = Parser().parsestr(emlHeader[msgIndex])
-        emlFlg[msgIndex] = MainSession.IMAP.fetchMsg(toDisplayNOs[msgIndex], "FLAG")[1][0]
-        emlSize[msgIndex] = MainSession.IMAP.fetchMsg(toDisplayNOs[msgIndex], "SIZE")[1][0][:-1].split()[-1]
+        emlFlg[msgIndex] = MainSession.IMAP.fetchMsg(toDisplayNOs[msgIndex],
+                "FLAG")[1][0]
+        emlSize[msgIndex] = MainSession.IMAP.fetchMsg(toDisplayNOs[msgIndex],
+                "SIZE")[1][0][:-1].split()[-1]
     return (emlHeader, emlFlg, emlSize, toDisplayNOs)
 
 # Controlling the prompt to obtain the Folder to search from.
