@@ -1,11 +1,5 @@
 #!/usr/bin/env python
 
-# FEATURES:
-# GROUP, IMPORT, TRASH, ... ...
-# HUMAN LANGUAGE INTERPRETER
-#
-# DECEMBER!!!
-
 import os
 import sys
 import curses                               # for console
@@ -19,7 +13,6 @@ import locale
 locale.setlocale(locale.LC_ALL,"en_US.UTF-8")
 reload(sys)
 sys.setdefaultencoding("utf-8")
-#import readline
 
 def run(win, MainSession):
     stdscr = win                            # Initiate Curses screen
@@ -44,8 +37,6 @@ def run(win, MainSession):
     exitApp(stdscr)
 
 def init():
-    #readline.parse_and_bind('tab: complete')    # Tab Completion
-    #readline.parse_and_bind('set editing-mode vi')  # Arrow Key Support
     validEmail = False
     if len(sys.argv) > 2 or (len(sys.argv) == 2 and
             not isValidEmail(sys.argv[1].lower())):
@@ -66,8 +57,6 @@ def init():
     curses.wrapper(runWithSession)
     MainSession.close()
 
-init()
-
-#try: init()
-#except: sys.exit(THANK_YOU_MSG)
+try: init()
+except: sys.exit(THANK_YOU_MSG)
 

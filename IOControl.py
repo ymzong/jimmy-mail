@@ -15,6 +15,7 @@ import imaplib
 import locale
 locale.setlocale(locale.LC_ALL,"en_US.UTF-8")
 from html2text import html2text
+from email.utils import parseaddr as ParseAddr
 
 ############################# KEY RESPOND UNIT #########################
 keyResponse = dict()
@@ -211,7 +212,7 @@ def confirmDraft(MainSession, EmailTo, EmailMIME):
                 else: print SAVE_SUCC % MainSession.SentFolderName
             break
         elif choice == "n": break
-        else:   choice = raw_input(Y_OR_N)
+        else: choice = raw_input(Y_OR_N)
 
 def drawScrMainMenu(stdscr, MainSession):
     (maxY, maxX) = stdscr.getmaxyx()
@@ -295,10 +296,11 @@ def emailLister(MainSession, msgNOs, stdscr):
         drawList(MainSession, stdscr, emlData, currentTop, currentSelect)
         drawInstruction(MainSession, stdscr)
         event = stdscr.getch();
-        (flag, event, currentSelect, currentTop, maxY, msgNOs, emlData) = emailListResponder(event, MainSession, emlData, currentSelect, currentTop, maxY, msgNOs, flag, stdscr)
+        (flag, event, currentSelect, currentTop, maxY, msgNOs, emlData) =\
+            emailListResponder(event, MainSession, emlData, currentSelect,
+                    currentTop, maxY, msgNOs, flag, stdscr)
     stdscr.clear(); stdscr.refresh()
     curses.reset_shell_mode(); curses.curs_set(1)
-
 
 def emailListResponder(event, MainSession, emlData, currentSelect, currentTop, maxY, msgNOs, flag, stdscr):
     if event in [ord('q'),ord('Q'),curses.KEY_UP,curses.KEY_DOWN,curses.KEY_PPAGE,curses.KEY_NPAGE]:
@@ -317,6 +319,11 @@ def emailListResponder(event, MainSession, emlData, currentSelect, currentTop, m
 def setRead(inFlags):
     if inFlags.find("\\Seen") == -1:
         inFlags += "\\Seen"
+    return inFlags
+
+def setReplied(inFlags):
+    if inFlags.find("\\Answered") == -1:
+        inFlags += "\\Answered"
     return inFlags
 
 def processCodec(msgCodec):
@@ -343,26 +350,34 @@ def viewEmail(MainSession, emlData, msgNOs, currentSelect, stdscr):
     stdscr.addstr(min(2,maxY-1),max(0,(maxX-len(PLEASE_WAIT))/2),
             PLEASE_WAIT)
     stdscr.refresh();
-    msgCodec = Proc(MainSession.IMAP.fetchMsg(\
-            emlData[3][currentSelect])[1][0][1])
-    txtMsg = processCodec(msgCodec) + EOM;
+    txtMsg = processCodec(Proc(MainSession.IMAP.fetchMsg(\
+            emlData[3][currentSelect])[1][0][1])) + EOM
     (flag,event,currentTop)=(True, None, 0)
     while flag:
-        maxY, maxX = stdscr.getmaxyx(); stdscr.clear(); stdscr.box()
-        stdscr.addstr(0,max(0,(maxX-len(JIMMY_MAIL))/2),JIMMY_MAIL);
-        stdscr.refresh(); coord = (6, 1, maxY - 4, maxX - 1) 
-        maxLen = len(txtMsg) / (maxX - 2) + txtMsg.count("\n") + 1 
-        pad = curses.newpad(maxLen, maxX - 2)
-        pad.clear(); pad.refresh(currentTop,0,*coord)
-        drawBasicInfo(MainSession, emlData, currentSelect, stdscr)
-        try: pad.addstr(0,0, txtMsg); pad.refresh(currentTop, 0, *coord)
-        except: pass
+        maxY, maxX = stdscr.getmaxyx()
+        maxLen = len(txtMsg) / (maxX - 2) + txtMsg.count("\n") + 1
+        createMailGraphics(MainSession, emlData, txtMsg, stdscr, currentSelect, currentTop)
         event = stdscr.getch()      # Get Keyboard Inputs
         if event in [ord('q'),ord('Q'),curses.KEY_UP,curses.KEY_DOWN,curses.KEY_PPAGE,curses.KEY_NPAGE]:
             (flag,currentTop)=respondMsgPg(flag,event,currentTop,maxY,maxLen)
         elif event in [ord("D"), ord("r"), ord("R"), ord("F"), ord("f")]:
             (emlData, msgNOs) = modifyEml(MainSession, emlData, msgNOs, currentSelect, event, stdscr)
             if event == ord("D"): flag = False   # Quit Email Viewing
+
+def createMailGraphics(MainSession, emlData, txtMsg, stdscr, currentSelect, currentTop):
+    maxY, maxX = stdscr.getmaxyx();
+    stdscr.clear();
+    stdscr.box()
+    stdscr.addstr(0,max(0,(maxX-len(JIMMY_MAIL))/2),JIMMY_MAIL);
+    stdscr.refresh();
+    coord = (6, 1, maxY - 4, maxX - 1)
+    maxLen = len(txtMsg) / (maxX - 2) + txtMsg.count("\n") + 1
+    pad = curses.newpad(maxLen, maxX - 2)
+    pad.clear()
+    pad.refresh(currentTop, 0, *coord)
+    drawBasicInfo(MainSession, emlData, currentSelect, stdscr)
+    try: pad.addstr(0,0, txtMsg); pad.refresh(currentTop, 0, *coord)
+    except: pass
 
 def respondMsgPg(flag, event, currentTop, maxY, maxLen):
     if event == ord('q') or event == ord('Q'):
@@ -409,17 +424,24 @@ def modifyEml(MainSession, emlData, msgNOs, currentSelect, event, stdscr):
             for part in emlData:  part.pop(currentSelect)
             MainSession.IMAP.setPurge(originalMsgNo)
     elif event == ord("R") or event == ord("r"):
-        curses.def_prog_mode(); stdscr.clear(); stdscr.refresh()
-        curses.reset_shell_mode(); print PROC_ORIGINAL
-        msgCodec = Proc(MainSession.IMAP.fetchMsg(\
-                emlData[3][currentSelect])[1][0][1])
-        toSendMsg = constructReply(MainSession, msgCodec)
-        try: MainSession.SMTP.session.sendmail(toSendMsg["From"], 
-                toSendMsg["To"], toSendMsg.as_string())
-        except Exception as err: print SEND_ERR % err
-        else: confirmDraft(MainSession, toSendMsg["To"], toSendMsg)
-        curses.reset_prog_mode(); stdscr.clear(); stdscr.refresh()
+        emlData = replyEmailApp(MainSession, emlData, currentSelect, stdscr)
     return emlData, msgNOs
+
+def replyEmailApp(MainSession, emlData, currentSelect, stdscr):
+    curses.def_prog_mode(); stdscr.clear(); stdscr.refresh()
+    curses.reset_shell_mode(); print PROC_ORIGINAL
+    msgCodec = Proc(MainSession.IMAP.fetchMsg(\
+            emlData[3][currentSelect])[1][0][1])
+    toSendMsg = constructReply(MainSession, msgCodec)
+    try: MainSession.SMTP.session.sendmail(toSendMsg["From"], 
+            ParseAddr(toSendMsg["To"])[1], toSendMsg.as_string())
+    except Exception as err: print toSendMsg["To"], toSendMsg["From"]; print SEND_ERR % err; raw_input()
+    else:
+        confirmDraft(MainSession, [toSendMsg["To"]], toSendMsg)
+        emlData[1][currentSelect] = setReplied(emlData[1][currentSelect])
+        MainSession.IMAP.setAnswered(emlData[3][currentSelect])
+    curses.reset_prog_mode(); stdscr.clear(); stdscr.refresh()
+    return emlData
 
 def constructReply(MainSession, msgCodec):
     curses.curs_set(1)
@@ -430,7 +452,7 @@ def constructReply(MainSession, msgCodec):
     newMsg["To"] = msgCodec["Reply-To"] or msgCodec["From"]
     newMsg["From"] = MainSession.Email_Addr
     print "From: " + newMsg["From"]
-    print "To: " + newMsg["To"]
+    print "To: " + ",".join([newMsg["To"]])
     print "Subject: " + newMsg["Subject"]
     newText = getEmailText()
     originalText = ("> " + processCodec(msgCodec)).replace("\n","\n> ") 

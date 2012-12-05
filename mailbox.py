@@ -67,6 +67,9 @@ class MailBoxIMAP(object):
     def setPurge(self, msgNo):
         self.session.store(str(msgNo), "+FLAGS", "\\Deleted")
         self.session.expunge()
+    
+    def setAnswered(self, msgNo):
+        self.session.store(str(msgNo), "+FLAGS", "\\Answered")
 
     def getInboxFolder(self):
         FolderList = self.session.list()[1]
