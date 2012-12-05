@@ -1,16 +1,24 @@
 #!/usr/bin/env python
 
+# main.py
+# Yiming Zong - Carnegie Mellon University '16
+# yzong (at) cmu.edu
+# ----------------------------------------------------------------
+#     This file is the main code that executes the program. Please
+# DO NOT modify this file unless you are absolutely sure about what
+# you are doing.
+
 import os
 import sys
 import curses                               # for console
 import getpass                              # for password entering
 import time                                 # for timing purposes
 from appdata import *                       # Application constants
-from mailbox import MailBoxIMAP, MailBoxSMTP, MailSession # Self-defined mailbox classes
+from mailbox import MailBoxIMAP, MailBoxSMTP, MailSession # Mailbox classes
 from misc import *                          # Miscellaneous Functions
 from IOControl import *
 import locale
-locale.setlocale(locale.LC_ALL,"en_US.UTF-8")
+locale.setlocale(locale.LC_ALL,"en_US.UTF-8")# Internalization purpose
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
@@ -36,6 +44,8 @@ def run(win, MainSession):
     # Terminate the program
     exitApp(stdscr)
 
+#     This function processes arguments passed from terminal,
+# then calls the curses window for program execution.
 def init():
     validEmail = False
     if len(sys.argv) > 2 or (len(sys.argv) == 2 and

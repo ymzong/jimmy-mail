@@ -1,9 +1,19 @@
+# appdata.py
+# Yiming Zong - Carnegie Mellon University '16
+# yzong (at) cmu.edu
+# -----------------------------------------------------------------------
+#     This file contains constant strings that are CRUCIAL to the running
+# of program. Please do NOT edit unless you are absolutely sure about what
+# are doing.
+
 ARG_USAGE = ("Welcome to use Jimmy-Mail! (Smart enough to discover this " +
              "function!)\nUsage: python main.py" + " " * 21 + "Run Jimmy-" +
-             "Mail in Traditional Mode\n" + " " * 7 + "python main.py [Email Address]     " +
+             "Mail in Traditional Mode\n" + " " * 7 + "python main.py " + 
+             "[Email Address]     " +
              "Attempt to login using the given email address.\n" + " " * 7 +
              "python main.py help" + " " * 16 + "Display this help " + 
              "message again.\n")
+
 THANK_YOU_MSG = "\nThank you for using Jimmy-Mail. :-)"
 WELCOME_MSG = [None, None, None, None, None, None]
 WELCOME_MSG[0] = "Hello, welcome to use Jimmy-Mail!"
@@ -18,17 +28,20 @@ EMAIL_INVALID = "Email invalid. Please enter again. (Enter \"q\" to quit)"
 
 IMAP_PROMPT = "Address for IMAP Server (press ENTER to use default: %s): "
 SMTP_PROMPT = "Address for SMTP Server (press ENTER to use default: %s): "
-IMAP_USERNAME_PROMPT = "Username for IMAP server (press ENTER to use default: %s): "
+IMAP_USERNAME_PROMPT = ("Username for IMAP server (press ENTER to use " + 
+                        "default: %s): ")
 IMAP_PASSWORD_PROMPT = "Password for IMAP server: "
-SMTP_USERNAME_PROMPT = "Username for SMTP server (press ENTER to reuse IMAP username): "
-SMTP_PASSWORD_PROMPT = "Password for SMTP server (press ENTER to reuse IMAP password): "
+SMTP_USERNAME_PROMPT = ("Username for SMTP server (press ENTER to reuse " + 
+                        "IMAP username): ")
+SMTP_PASSWORD_PROMPT = ("Password for SMTP server (press ENTER to reuse " + 
+                        "IMAP password): ")
 
 RETRY_PROMPT = "Bad username/password. Try again?"
 CREDENTIAL_INVALID = "Invalid user credentials. Please check and try again."
 MAX_TRY = 3
 LOGIN_SUCCESS = "Login success as %s@%s!\n"
-CONNECTION_ERR = ("Error occured while establishing connection with the server.\n" +
-        "The program will now exit.")
+CONNECTION_ERR = ("Error occured while establishing connection with the " +
+                  "server.\nThe program will now exit.")
 INIT_COMPLETE = "Initialization complete! Now loading main modules..."
 
 WAIT_FOR_ENTER = "\nPress ENTER to continue..."
@@ -49,16 +62,21 @@ INSTRUCTIONS = ["Welcome to use Jimmy-Mail!",
                 "Following are the command to control your mailbox:",
                 "i/inbox: View Inbox   |   n/new/newmail: New Email",
                 "search/find: search for specific emails",
-                "Smart-Mode: input any human command you want and see if we understand!",
-                "q/quit: Exit Jimmy-Mail  |  h/help/?: Display this help again", ""]
+                ("Smart-Mode: input any human command you want and see if we"+
+                " understand!"),
+                "q/quit: Exit Jimmy-Mail  |  h/help/?: Display this help again"
+                , ""]
 
 PLEASE_WAIT = "Loading email headers, please wait..."
 
-INSTRUCT1 = ["Arrow Keys -  Move thru Email List   f - Flag/Unflag Msg   q - Quit Email List",
-             "SPACE/ENTER - Read Mail   D (CAPITAL D) - Delete Mail   r - Reply Email"]
+INSTRUCT1 = [("Arrow Keys -  Move thru Email List   f - Flag/Unflag Msg   " + 
+         "q - Quit Email List"),
+             ("SPACE/ENTER - Read Mail   D (CAPITAL D) - Delete Mail   " + 
+         "r - Reply Email")]
 
 INSTRUCT_MSG = ["Arrow Keys - Move along Email   f - Flag/Unflag Msg",
-                "D (CAPITAL D) - Delete Mail   r - Reply Email   q - Quit to Parent Folder"]
+                ("D (CAPITAL D) - Delete Mail   r - Reply Email   " +
+                "q - Quit to Parent Folder")]
 EOM = "### END OF EMAIL TEXT ###"
 
 INBOX_ERR = "Error occured when reading Inbox folder %s"
@@ -67,7 +85,8 @@ INBOX_EPT = "The mail folder is empty!"
 RECV_EMPTY = "     You must enter at least one recipient to proceed!"
 RECV_INVALID = "     Invalid Email! Please check and enter again."
 
-EMLTXT_INTRO = "|Email Text: (Enter ONLY '#end#' on one line to SEND the message)\n"
+EMLTXT_INTRO = ("|Email Text: (Enter ONLY '#end#' on one line to "
+              + "SEND the message)\n")
 SEND_INTRO = ("Please enter ONE email per line.\nPress ENTER to a " + 
               "recipient category to finish.\nEnter ONLY '#q#' on any " + 
               "input to DISCARD the message.")
@@ -87,14 +106,18 @@ BROWSE_ERR = "Sorry, network error while browsing the email directory."
 CRITERIA_ERR = "Sorry, search criteria not enough."
 KEYWD_STR = ["", "FROM", "TO", "SUBJECT", "TEXT"]
 SEARCH_ERR = "Search Error! %s"
-SEARCH_EMPTY = "\nSearch result empty. Please change search criteria and try again.\n"
+SEARCH_EMPTY = ("\nSearch result empty. Please change search criteria and " + 
+            "try again.\n")
 SEARCH_RESULT = "\nPress ENTER to proceed to the search result..."
-SEARCH_SOURCE_INTRO = "\nEnter the folder to search from: (press ENTER to search in INBOX; enter \"#l#\" for a list of searchable folders) "
+SEARCH_SOURCE_INTRO = ("\nEnter the folder to search from: (press ENTER to " + 
+        "search in INBOX; enter \"#l#\" for a list of searchable folders) ")
 SEARCH_PSB_FDR = "Following are the searchable folders: %s"
 FOLDER_NOT_FND = "Folder not found."
 SEARCH_FDR_INTRO = "Please enter the folder you want to search from: "
-SEARCH_PROMPT = "Enter the %s of email (a part of email or name would suffice): (press ENTER to skip this criteria) "
-SEARCH_PROMPT1 = "Please enter any part of the %s of email: (press ENTER to skip this criteria)"
+SEARCH_PROMPT = ("Enter the %s of email (a part of email or name would " + 
+                "suffice): (press ENTER to skip this criteria) ")
+SEARCH_PROMPT1 = ("Please enter any part of the %s of email: (press ENTER " +
+                    "to skip this criteria)")
 NO_TXT_AVAIL = "\n### No Text Available for This Email. ###"
 NO_TITLE = "(Untitled Email)"
 
@@ -108,8 +131,11 @@ Q_LIST = ["quit", "q", "exit", "x", ":q", "bye"]
 H_LIST = ["help", "h", "--help", "?", "??", "help!"]
 I_LIST = ["inbox", "i", "mails", "check mail", "check email"]
 S_LIST = ["search", "find", "f", "s", "filter"]
-N_LIST = ["new", "newmail", "compose", "compose email", "compose mail", "n", "nm", "write", "send"]
+N_LIST = ["new", "newmail", "compose", "compose email", "compose mail",
+        "n", "nm", "write", "send"]
 LFDR_LIST = ["dir", "ls", "folders"]
-NOT_UNDSTD = ("Sorry, Jimmy-Bot does not understand your command. Try" + 
+NOT_UNDSTD = ("Sorry, Jimmy-Bot does not understand your command. Try" +
               " some others maybe? :-)")
-EML_INDICATION = ["mails", "mail", "email", "emails", "all mails", "all emails", "all messages"]
+EML_INDICATION = ["mails", "mail", "email", "emails", "all mails",
+                "all emails", "all messages"]
+

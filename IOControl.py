@@ -20,15 +20,20 @@ from email.utils import parseaddr as ParseAddr
 ############################# KEY RESPOND UNIT #########################
 keyResponse = dict()
 keyResponse["WELCOME"] = [10, ord("q")]   # Enter
-keyResponse["MAIN_MENU"] = [ord("0"), ord("1"), ord("2"), ord("3"),
-                            ord("s"), ord("o"), ord("h"), ord("q")]
-
+keyResponse["MAIN_MENU"] = [ord("0"), ord("1"), ord("2"),
+                            ord("s"), ord("h"), ord("h")]
+EML_LST_GEN = [ord('q'),ord('Q'),curses.KEY_UP,curses.KEY_DOWN,
+            curses.KEY_PPAGE,curses.KEY_NPAGE]
+EML_LST_EDT = [ord("D"), ord("r"), ord("R"), ord("F"), ord("f")]
+EML_LST_GO = [ord(" "), 10, 13, ord("\n"), curses.KEY_ENTER]
+# This is the key responder for Welcome Mode and Main Menu Mode (simple).
 def keyRespond(stdscr, MainSession, Appdata, event):
     if Appdata.mode[0] == "WELCOME":
         respondWelcome(stdscr, MainSession, Appdata, event)
     if Appdata.mode[0] == "MAIN_MENU":
         respondMainMenu(stdscr, MainSession, Appdata, event)
 
+# This is called when the program exits. Connection to server is closed.
 def exitApp(stdscr):
     curses.nocbreak()
     stdscr.keypad(0)
@@ -36,25 +41,31 @@ def exitApp(stdscr):
     curses.endwin()
     sys.exit(THANK_YOU_MSG)
 
+# This is the key respond wrapper for Welcome Screen ("q" or ENTER).
 def respondWelcome(stdscr, MainSession, Appdata, event):
     if event == ord("q"):
         exitApp(stdscr)
     elif event == 10:
         Appdata.mode = ("MAIN_MENU", None)
 
+# This is the key respond wrapper for Main Menu (three options).
 def respondMainMenu(stdscr, MainSession, Appdata, event):
-    if event == ord("s") or event == ord("0"):
+    if event in [ord("s"), ord("S"), ord("0")]:
         smartCommand(stdscr, MainSession, Appdata, event)
-    if event == ord("q") or event == ord("2"):
+    if event in [ord("h"), ord("H"), ord("1")]:
+        displayHelp(stdscr)
+    if event in [ord("q"), ord("Q"), ord("2")]:
         exitApp(stdscr)
 
 ############################# DRAW SCREEN UNIT #########################
+# This is the dispatcher for drawing Main Menu and Welcome Screen.
 def drawScr(stdscr, MainSession, Appdata):
     if Appdata.mode[0] == "WELCOME":
         drawScrWelcome(stdscr)
     elif Appdata.mode[0] == "MAIN_MENU":
         drawScrMainMenu(stdscr, MainSession)
 
+# This function draws the welcome screen message.
 def drawScrWelcome(stdscr):
     (maxY, maxX) = stdscr.getmaxyx()
     topMargin = max((maxY - 5) / 2, 1)
@@ -62,6 +73,8 @@ def drawScrWelcome(stdscr):
         stdscr.addstr(min(topMargin + i, maxY - 1), max((maxX - 
             len(WELCOME_MSG[i])) / 2, 0),WELCOME_MSG[i])
 
+# This function reads and respond to all Command Line inputs.
+# (Command Line Interface Mainloop)
 def smartCommand(stdscr, MainSession, Appdata, event):
     (maxY,maxX) = stdscr.getmaxyx()
     curses.raw(); curses.cbreak(); curses.curs_set(1); curses.setsyx(0,0)
@@ -78,6 +91,7 @@ def smartCommand(stdscr, MainSession, Appdata, event):
         command = raw_input(">> ")
     exitApp(stdscr)
 
+# This function is Jimmy-Bot, the human language interpreter.
 def parseSmart(MainSession, command, stdscr):
     cmdParts = command.lower().split(" ")
     if (("list" in command and "folder" in command)     # List all folders.
@@ -95,6 +109,7 @@ def parseSmart(MainSession, command, stdscr):
         parseSearchCommand(MainSession, command, stdscr)
     else: print NOT_UNDSTD
 
+# This function specifically concentrates on parsing "search" commands.
 def parseSearchCommand(MainSession, command, stdscr):
     cmdParts = command.lower().split(" ")
     AboutPosi = cmdParts.index("about") if "about" in cmdParts else -1
@@ -116,7 +131,7 @@ def parseSearchCommand(MainSession, command, stdscr):
                 else len(cmdParts)]), "", "", " ".join(cmdParts[AboutPosi+1:
                 FromPosi if FromPosi > AboutPosi else len(cmdParts)])],stdscr)
 
-
+# This function lists all emails of Inbox.
 def displayInbox(MainSession, stdscr):
     try: MainSession.IMAP.session.select(MainSession.IMAP.getInboxFolder())
     except Exception as err: print INBOX_ERR % err
@@ -128,6 +143,7 @@ def displayInbox(MainSession, stdscr):
                 MainSession.IMAP.session.search(None, "ALL")\
                 [1][0].split(" ")], stdscr)
 
+# This function prompts (via command line) the user to input mail recipient.
 def getEmailTo():
     EmailTo = list()
     CurrentEmail = raw_input("|To: ")
@@ -143,6 +159,7 @@ def getEmailTo():
         CurrentEmail = raw_input("|To: ")
     return EmailTo
 
+# This function reads the email's content from user.
 def getEmailText():
     print EMLTXT_INTRO
     EmailText = list()
@@ -156,6 +173,8 @@ def getEmailText():
         result += EmailText[i] + "\n"
     return result
 
+#     This function gathers all information necessary for email, then
+#  send the email using imaplib.
 def sendMailApp(MainSession, emlTgt = None):
     curses.curs_set(1)                      # show the cursor
     print SEND_INTRO
@@ -177,14 +196,18 @@ def sendMailApp(MainSession, emlTgt = None):
     except Exception as err: print SEND_ERR % err
     else:   confirmDraft(MainSession, EmailTo, EmailMIME)
 
+# This function displays the Recipients of the email (if any).
 def processEmlTo(MainSession, EmailTo):
-    if EmailTo == None: return False
+    if EmailTo == None:
+        return False
     ToDisplay =  "-"*10 + "\n"+"|From: "+MainSession.Email_Addr+"\n|To: "
-    for i in xrange(len(EmailTo) - 1):  ToDisplay += EmailTo[i] + "; "
+    for i in xrange(len(EmailTo) - 1):
+        ToDisplay += EmailTo[i] + "; "
     ToDisplay += EmailTo[len(EmailTo) - 1]
     print ToDisplay
     return True
 
+# This function reads the email title of the email to be sent.
 def processEmlTitle(EmailTitle):
     if EmailTitle.lower() == "#q#": return False
     while True:
@@ -195,7 +218,10 @@ def processEmlTitle(EmailTitle):
         else:   break
     return EmailTitle
 
+# This function asks user whether to save sent message.
+# If user chooses yes, then save a copy to Sent Folder.
 def confirmDraft(MainSession, EmailTo, EmailMIME):
+    EmailMIME["Date"] = email.utils.formatdate(None, True) # Time Tag!
     choice = raw_input(SAVE_MSG % ",".join(EmailTo))
     while True:
         if choice == "y":
@@ -214,6 +240,8 @@ def confirmDraft(MainSession, EmailTo, EmailMIME):
         elif choice == "n": break
         else: choice = raw_input(Y_OR_N)
 
+# This function draws the Main Menu on the screen.
+# It is not "hard-coded" such that the menu items are easily changable.
 def drawScrMainMenu(stdscr, MainSession):
     (maxY, maxX) = stdscr.getmaxyx()
     InitStr = LOGGED_IN_AS + MainSession.Email_Addr
@@ -233,6 +261,8 @@ def drawScrMainMenu(stdscr, MainSession):
                     max((maxX - len(MENU_ENTRIES[i])) / 2, 0),
                     MENU_ENTRIES[i])
 
+#     This function gathers user's response to Search Command, then
+# display the result with performSearch function.
 def searchMailApp(MainSession, stdscr):
     curses.curs_set(1)
     print SEARCH_PMPT
@@ -247,6 +277,8 @@ def searchMailApp(MainSession, stdscr):
             break
     performSearch(MainSession, sCriteria, stdscr)
 
+#     This function constructs a search string and send it to IMAP server,
+# which is in accordance with RFC 3501 standard. 
 def performSearch(MainSession, sCriteria, stdscr):
     try: MainSession.IMAP.session.select(sCriteria[0])
     except: 
@@ -267,11 +299,13 @@ def performSearch(MainSession, sCriteria, stdscr):
             searchStr = searchStr[:-1] + ")"
             displayResult(MainSession, searchStr, stdscr)
 
+#     This function constructs a message list from the Search Result,
+# then call emailLister function to list the results.
 def displayResult(MainSession, searchStr, stdscr):
     try:    msgIDs = MainSession.IMAP.session.search(None, searchStr)[1][0]
     except Exception as err: print SEARCH_ERR % err
     else:
-        if msgIDs == "":
+        if msgIDs == "":    # If list is empty, return "Nothing Found".
             print SEARCH_EMPTY
             return
         else:
@@ -279,56 +313,68 @@ def displayResult(MainSession, searchStr, stdscr):
             raw_input(SEARCH_RESULT)
             emailLister(MainSession, msgNOs, stdscr)
 
-# Entries Per Page: MaxY - 5
+#     This is the EmailLister function that handles requests from Search
+# command, Inbox display, Folder display, etc.
+#     Entries Per Page: MaxY - 5
 def emailLister(MainSession, msgNOs, stdscr):
     curses.def_shell_mode(); curses.reset_prog_mode()    # Back to curses
-    curses.curs_set(0); stdscr.clear(); stdscr.refresh()
+    curses.curs_set(0); stdscr.clear(); stdscr.refresh() # Init curses
     maxY, maxX = stdscr.getmaxyx(); stdscr.clear(); stdscr.box()
     stdscr.addstr(0, max(0, (maxX - len(JIMMY_MAIL)) / 2), JIMMY_MAIL)
     stdscr.addstr(min(2,maxY-1),max(0,(maxX-len(PLEASE_WAIT))/2),PLEASE_WAIT)
     stdscr.refresh()
-    emlData = fetchList(MainSession, msgNOs, stdscr)
+    emlData = fetchList(MainSession, msgNOs, stdscr)    # Retrieve Messages
     (maxDigit,flag,event,currentTop,currentSelect)=(digitNo(len(msgNOs)),
             True, None, 0, 0)
     while flag:
         maxY, maxX = stdscr.getmaxyx(); stdscr.clear(); stdscr.box()
         stdscr.addstr(0, max(0, (maxX - len(JIMMY_MAIL)) / 2), JIMMY_MAIL)
+        # Draw the Email list by calling drawList().
         drawList(MainSession, stdscr, emlData, currentTop, currentSelect)
+        # Draw the footnotes by calling drawInstruction().
         drawInstruction(MainSession, stdscr)
         event = stdscr.getch();
+        # Respond to key stroke events.
         (flag, event, currentSelect, currentTop, maxY, msgNOs, emlData) =\
             emailListResponder(event, MainSession, emlData, currentSelect,
                     currentTop, maxY, msgNOs, flag, stdscr)
     stdscr.clear(); stdscr.refresh()
-    curses.reset_shell_mode(); curses.curs_set(1)
+    curses.reset_shell_mode(); curses.curs_set(1)   # Restore to shell mode.
 
-def emailListResponder(event, MainSession, emlData, currentSelect, currentTop, maxY, msgNOs, flag, stdscr):
-    if event in [ord('q'),ord('Q'),curses.KEY_UP,curses.KEY_DOWN,curses.KEY_PPAGE,curses.KEY_NPAGE]:
+# This function is the key stroke responder for EmailList().
+def emailListResponder(event, MainSession, emlData, currentSelect,
+        currentTop, maxY, msgNOs, flag, stdscr):
+    if event in EML_LST_GEN:    # For position movements.
         (flag, event, currentSelect, currentTop, maxY, msgNOs) =\
           respondGeneral(flag,event,currentSelect,currentTop,maxY,msgNOs)
-    elif event in [ord("D"), ord("r"), ord("R"), ord("F"), ord("f")]:
-        (emlData, msgNOs) = modifyEml(MainSession, emlData, msgNOs, currentSelect, event, stdscr)
-    elif event in [ord(" "), 10, 13, ord("\n"), curses.KEY_ENTER]:
+    elif event in EML_LST_EDT:  # For email property operations.
+        (emlData, msgNOs) = modifyEml(MainSession, emlData, msgNOs,
+                currentSelect, event, stdscr)
+    elif event in EML_LST_GO:   # For entering View Mode
         try:
             emlData[1][currentSelect] = setRead(emlData[1][currentSelect])
             viewEmail(MainSession, emlData, msgNOs, currentSelect, stdscr)
-        except Exception: pass
+        except Exception: pass  # If exception happens, do no operations.
     curses.napms(50)        # Anti-flashing
     return (flag, event, currentSelect, currentTop, maxY, msgNOs, emlData)
 
+# This function sets the status of a locally stored email to "Read".
 def setRead(inFlags):
     if inFlags.find("\\Seen") == -1:
         inFlags += "\\Seen"
     return inFlags
 
+# This function sets the status of a locally stored email to "Replied".
 def setReplied(inFlags):
     if inFlags.find("\\Answered") == -1:
         inFlags += "\\Answered"
     return inFlags
 
+# This function snaps the Plain Text bit of raw email message.
 def processCodec(msgCodec):
     txtMsg = None
     for part in msgCodec.walk():
+        # If we have text/plain, then we are good.
         if part.get_content_type() == "text/plain":
             txtMsg = part.get_payload().replace("\r","").\
                     replace("\n\n","\n")
@@ -336,14 +382,16 @@ def processCodec(msgCodec):
     if txtMsg == None:  # If no plain text available, use html version.
         for part in msgCodec.walk():
             if part.get_content_type() == "text/html":
-                try: txtMsg = FROM_HTML+html2text(part.get_payload())+EOM
+                try: txtMsg = FROM_HTML+html2text(part.get_payload())
                 except Exception: txtMsg = ERR_PARSING
                 else:break
     if txtMsg == None:  # No Text and HTML, show error.
         txtMsg = NO_TXT_AVAIL
     return txtMsg
 
+# This function contains the mainloop for Email-Reading interface.
 def viewEmail(MainSession, emlData, msgNOs, currentSelect, stdscr):
+    # Set up curses.
     curses.def_prog_mode();curses.curs_set(0);stdscr.clear();stdscr.refresh()
     maxY, maxX = stdscr.getmaxyx(); stdscr.box()
     stdscr.addstr(0,max(0,(maxX-len(JIMMY_MAIL))/2),JIMMY_MAIL)
@@ -351,7 +399,7 @@ def viewEmail(MainSession, emlData, msgNOs, currentSelect, stdscr):
             PLEASE_WAIT)
     stdscr.refresh();
     txtMsg = processCodec(Proc(MainSession.IMAP.fetchMsg(\
-            emlData[3][currentSelect])[1][0][1])) + EOM
+            emlData[3][currentSelect])[1][0][1])) + EOM   # Retrieve message.
     (flag,event,currentTop)=(True, None, 0)
     while flag:
         maxY, maxX = stdscr.getmaxyx()
@@ -364,6 +412,8 @@ def viewEmail(MainSession, emlData, msgNOs, currentSelect, stdscr):
             (emlData, msgNOs) = modifyEml(MainSession, emlData, msgNOs, currentSelect, event, stdscr)
             if event == ord("D"): flag = False   # Quit Email Viewing
 
+#     Email textx are displayed on a "Pad" of curses, which supports
+# scrolling options.
 def createMailGraphics(MainSession, emlData, txtMsg, stdscr, currentSelect, currentTop):
     maxY, maxX = stdscr.getmaxyx();
     stdscr.clear();
@@ -379,6 +429,7 @@ def createMailGraphics(MainSession, emlData, txtMsg, stdscr, currentSelect, curr
     try: pad.addstr(0,0, txtMsg); pad.refresh(currentTop, 0, *coord)
     except: pass
 
+# This function responds to Message Scrolling key strokes.
 def respondMsgPg(flag, event, currentTop, maxY, maxLen):
     if event == ord('q') or event == ord('Q'):
         flag = False
@@ -390,6 +441,7 @@ def respondMsgPg(flag, event, currentTop, maxY, maxLen):
         currentTop = min(max(currentTop, 0), maxLen - 2)
     return flag, currentTop
 
+# This function draws information from email Header then prints basic data.
 def drawBasicInfo(MainSession, emlData, currentIndex, stdscr):
     maxY, maxX = stdscr.getmaxyx()
     for i in xrange(len(INSTRUCT_MSG)):
@@ -406,43 +458,47 @@ def drawBasicInfo(MainSession, emlData, currentIndex, stdscr):
             replace("\r","").replace("\n", "")[:maxX - 11] or NO_TITLE)
     stdscr.addstr(5,1,"*"*(2 * maxX / 3))
 
+# This function prints key stroke helps at the bottom of View Mail Mode.
 def drawInstruction(MainSession, stdscr):
     for i in xrange(len(INSTRUCT1)):
         maxY, maxX = stdscr.getmaxyx()
         stdscr.addstr(max(maxY-len(INSTRUCT1)+i-1, 0),
                 max((maxX - len(INSTRUCT1[i])) / 2, 0),INSTRUCT1[i])
 
+# This function dispatchs email-related events to sub-functions.
 def modifyEml(MainSession, emlData, msgNOs, currentSelect, event, stdscr):
-    if event == ord("f") or event == ord("F"):
+    if event == ord("f") or event == ord("F"):  # Flag/Unflag
         emlData[1][currentSelect] = MainSession.IMAP.setFlagged(\
                 emlData[3][currentSelect], emlData[1][currentSelect])
-    elif event == ord("D"):
+    elif event == ord("D"):                     # Move to Trash
         originalMsgNo = emlData[3][currentSelect]
         succeed = MainSession.IMAP.setDelete(originalMsgNo, emlData)
         if succeed == True:
             msgNOs.pop(currentSelect)
             for part in emlData:  part.pop(currentSelect)
             MainSession.IMAP.setPurge(originalMsgNo)
-    elif event == ord("R") or event == ord("r"):
+    elif event == ord("R") or event == ord("r"):    # Reply to Message
         emlData = replyEmailApp(MainSession, emlData, currentSelect, stdscr)
     return emlData, msgNOs
 
+# This function handles the Reply-to-Email request.
 def replyEmailApp(MainSession, emlData, currentSelect, stdscr):
     curses.def_prog_mode(); stdscr.clear(); stdscr.refresh()
     curses.reset_shell_mode(); print PROC_ORIGINAL
     msgCodec = Proc(MainSession.IMAP.fetchMsg(\
-            emlData[3][currentSelect])[1][0][1])
-    toSendMsg = constructReply(MainSession, msgCodec)
+            emlData[3][currentSelect])[1][0][1])        # Fetch original Msg
+    toSendMsg = constructReply(MainSession, msgCodec)   # Gather reply MIME
     try: MainSession.SMTP.session.sendmail(toSendMsg["From"], 
             ParseAddr(toSendMsg["To"])[1], toSendMsg.as_string())
-    except Exception as err: print toSendMsg["To"], toSendMsg["From"]; print SEND_ERR % err; raw_input()
-    else:
+    except Exception as err: print SEND_ERR % err; raw_input()
+    else:       # If sending is successful, then ask whether save to draft.
         confirmDraft(MainSession, [toSendMsg["To"]], toSendMsg)
         emlData[1][currentSelect] = setReplied(emlData[1][currentSelect])
         MainSession.IMAP.setAnswered(emlData[3][currentSelect])
     curses.reset_prog_mode(); stdscr.clear(); stdscr.refresh()
     return emlData
 
+# This function contructs the Reply Message MIME according to RFC 3501.
 def constructReply(MainSession, msgCodec):
     curses.curs_set(1)
     newMsg = MIMEMultipart("alternative")
@@ -454,7 +510,7 @@ def constructReply(MainSession, msgCodec):
     print "From: " + newMsg["From"]
     print "To: " + ",".join([newMsg["To"]])
     print "Subject: " + newMsg["Subject"]
-    newText = getEmailText()
+    newText = getEmailText()    # Gain the main text of email.
     originalText = ("> " + processCodec(msgCodec)).replace("\n","\n> ") 
     transitionText = "\n\n> On %s, %s wrote:\n" % (msgCodec["Date"],
             msgCodec["From"])
@@ -462,6 +518,7 @@ def constructReply(MainSession, msgCodec):
     curses.curs_set(0)
     return newMsg
 
+# This function deals with Quit/Scrolling events in Email View Mode.
 def respondGeneral(flag, event, currentSelect, currentTop, maxY, msgNOs):
     if event == ord('q') or event == ord('Q'): flag = False
     elif event == curses.KEY_UP:
@@ -483,6 +540,7 @@ def respondGeneral(flag, event, currentSelect, currentTop, maxY, msgNOs):
             currentSelect += newTop - currentTop; currentTop = newTop
     return (flag, event, currentSelect, currentTop, maxY, msgNOs)
 
+# This function draws the list of emails. Selected email is highlighted.
 def drawList(MainSession, stdscr, emlData, currentTop, currentSelect):
     maxY, maxX = stdscr.getmaxyx()
     for i in xrange(0, maxY - 5):
@@ -493,6 +551,7 @@ def drawList(MainSession, stdscr, emlData, currentTop, currentSelect):
         stdscr.addstr(min(maxY - 1, i + 2), 1, getInfoStr(MainSession,
             emlData, currentTop+i, maxX - 2), fontStyle)
 
+# This function gathers an email's basic info from its Header.
 def getInfoStr(MainSession, emlData, currentIndex, strLen):
     emlHeader, emlFlg, emlSize, toDisplayNOs = emlData
     maxDigit = digitNo(len(emlFlg) + 1)
@@ -514,6 +573,9 @@ def getInfoStr(MainSession, emlData, currentIndex, strLen):
                     .replace('\r', ''), strLen))
     return "".join(emlString)[:strLen]
 
+#     This function, by using the self-defined, extended IMAP class
+# (MailBoxIMAP), retrieve the info needed to display message list
+# (Size, Title, Sender, Date).
 def fetchList(MainSession, msgNOs, stdscr):
     maxY, maxX = stdscr.getmaxyx()
     toDisplayNOs = list(reversed(msgNOs))
@@ -530,7 +592,7 @@ def fetchList(MainSession, msgNOs, stdscr):
                 "SIZE")[1][0][:-1].split()[-1]
     return (emlHeader, emlFlg, emlSize, toDisplayNOs)
 
-# Controlling the prompt to obtain the Folder to search from.
+# Controlling the prompt to obtain the Source Folder for searching.
 def getSourceFolder(MainSession):
     SourceFolder = raw_input(SEARCH_SOURCE_INTRO)
     while True:
@@ -560,3 +622,5 @@ def getSearchInfo(flag):
     else:
         print
         return EmailInfo
+
+
