@@ -1,2 +1,24 @@
 Timesheet for Term Project
+Yiming Zong - Carnegie Mellon University '16
+--------------------------------------------
+
+- Before Nov. 25:
+    * Occasional meet with Professor Kosbie
+    * Study about email protocols and related areas
+    (Totally 10+ hours)
+- Nov. 25 - Nov. 30:
+    * Build Basic User Interface
+    * Study RFC 3501, curses, imaplib, smtplib
+    Average 3+ hours per day.
+    (Totally 18 hours)
+
+- Dec. 1 - Dec. 5:
+    * Code I/O modules, UI
+    * Debugging, user feedback processing, etc.
+    Average 3+ hours per day.
+    (Detailed progress can be tracked with the git repo
+     of this project starting from Nov. 30)
+    (Totally 15 hours)
+
+Total time spent on this project: at least 43 hours.
 

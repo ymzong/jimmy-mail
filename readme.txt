@@ -1,10 +1,12 @@
 Jimmy-Mail v0.99
+Yiming Zong
 yzong (at) cmu.edu
 School of Computer Science
 Carnegie Mellon University '16
+-------------------------------
 
 1. OVERVIEW:
-    This is a console-based email client built on Python's Curses library.
+        This is a console-based email client built on Python's Curses library.
     Basic functions such as mail retrieval, email reply, Flag/Unflag, and
     email search are supported. Furthermore, this program features a
     simplistic robot that can understand human commands such as 'list folders'
@@ -12,6 +14,16 @@ Carnegie Mellon University '16
     (email searching is triggered). More functions will be added in the
     future, including more customizable options and better human-language
     understanding capability.
+
+2. DESIGN IDEAS:
+        Because currently mainstream email clients tend to consume substantial
+    amount of system resources, while most functions are not utilized by most
+    users, the author has been seeking for simplistic email clients, e.g.
+    console-based email client. After trying some such softwares (Mutt,
+    Alpine, etc) as instructed, the author found the control of those programs
+    hard to learn (similar to Vim and Emacs), so a great focus of this program
+    is the "user-friendliness", which initiates the idea of "Jimmy-Bot"
+    human-language interpretation function. 
 
 2. CODE STRUCTURE:
     This program's code structure is mainly as follows:
@@ -78,7 +90,8 @@ Carnegie Mellon University '16
     - Python's email library is used when encoding/decoding email messages.
       All operations are in accordance with MIME (Multipurpose Internet
       Mail Extensions).
-    - Non-ASCII (like UTF-8) headers are supported for display.
+    - Non-ASCII (like UTF-8) headers (like in French, Chinese and Japanese)
+      are supported for display.
 
 6. KNOWN ISSUES:
     - Because this email client retrieves all emails of a given list at once,
@@ -91,6 +104,8 @@ Carnegie Mellon University '16
 7. ACKNOWLEDGEMENTS:
     - First of all, this whole project is sincerely dedicated to Sunny C.,
       whose support and understanding enables me to finalize the project;
+    - Thanks Professor David Kosbie for his wonderful introductory course of
+      Python and his suggestions for my project;
     - And, thanks my Project Mentor Disha Bora who tracked the progress of
       this project, and my friends who gave me feedback on the performance of
       this program;

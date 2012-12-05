@@ -1,0 +1,4 @@
+    Please kindly read the reaadme.txt file located in the 
+top-level directory. All (technical and non-technidal) design
+details are included in the document.
+
