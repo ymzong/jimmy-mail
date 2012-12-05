@@ -2,6 +2,7 @@ import re
 from email.utils import parsedate as ParseDate
 from email.utils import parseaddr as ParseAddr
 from email.header import decode_header
+from appdata import *
 
 def isValidEmail(emailAddr):
     match= r"^.+\@(\[?)[a-zA-Z0-9\-\.]+\.([a-zA-Z]{2,3}|[0-9]{1,3})(\]?)$"
@@ -48,3 +49,6 @@ def sizeString(size):
     else: sizeStr = "ERR"
     return ("(" + sizeStr + ")").rjust(5)
 
+def SmartModeInstruct(maxX):
+    for instruction in INSTRUCTIONS:
+        print ("{0:^" + str(maxX) + "}").format(instruction)

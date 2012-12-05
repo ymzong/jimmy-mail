@@ -54,11 +54,62 @@ INSTRUCTIONS = ["Welcome to use Jimmy-Mail!",
 
 PLEASE_WAIT = "Loading email headers, please wait..."
 
-INSTRUCT1 = ["Arrow Keys -  Move thru Email List   f - Flag/Unflag Msg",
+INSTRUCT1 = ["Arrow Keys -  Move thru Email List   f - Flag/Unflag Msg   q - Quit Email List",
              "SPACE/ENTER - Read Mail   D (CAPITAL D) - Delete Mail   r - Reply Email"]
 
 INSTRUCT_MSG = ["Arrow Keys - Move along Email   f - Flag/Unflag Msg",
                 "D (CAPITAL D) - Delete Mail   r - Reply Email   q - Quit to Parent Folder"]
 EOM = "### END OF EMAIL TEXT ###"
 
+INBOX_ERR = "Error occured when reading Inbox folder %s"
+INBOX_EPT = "The mail folder is empty!"
 
+RECV_EMPTY = "     You must enter at least one recipient to proceed!"
+RECV_INVALID = "     Invalid Email! Please check and enter again."
+
+EMLTXT_INTRO = "|Email Text: (Enter ONLY '#end#' on one line to SEND the message)\n"
+SEND_INTRO = ("Please enter ONE email per line.\nPress ENTER to a " + 
+              "recipient category to finish.\nEnter ONLY '#q#' on any " + 
+              "input to DISCARD the message.")
+NO_TITLE_CONF = "        Really compose email with NO title? (y/n)"
+SEND_ERR = "An error occured during sending. %s"
+SAVE_MSG = "\nEmail Sent to %s! Save a copy to Sent Folder? (y/n)"
+SND_FDR_NIL = "No Sent Mail folder found. Sorry for the inconvenience."
+SAVE_ERR = "Error occured when saving to folder: %s."
+SAVE_SUCC = "Message saved to folder: %s."
+Y_OR_N = "Please ONLY enter \"y\" or \"n\":"
+
+SEARCH_PMPT = ("Please enter searching criteria as follows.\n" + 
+               "Press ENTER to skip the option.\n" +
+               "Enter \"#q#\" to quit to Smart Command-Line mode.\n" +
+               "Enter \"#f#\" to perform searching with existing criteria.\n")
+BROWSE_ERR = "Sorry, network error while browsing the email directory."
+CRITERIA_ERR = "Sorry, search criteria not enough."
+KEYWD_STR = ["", "FROM", "TO", "SUBJECT", "TEXT"]
+SEARCH_ERR = "Search Error! %s"
+SEARCH_EMPTY = "\nSearch result empty. Please change search criteria and try again.\n"
+SEARCH_RESULT = "\nPress ENTER to proceed to the search result..."
+SEARCH_SOURCE_INTRO = "\nEnter the folder to search from: (press ENTER to search in INBOX; enter \"#l#\" for a list of searchable folders) "
+SEARCH_PSB_FDR = "Following are the searchable folders: %s"
+FOLDER_NOT_FND = "Folder not found."
+SEARCH_FDR_INTRO = "Please enter the folder you want to search from: "
+SEARCH_PROMPT = "Enter the %s of email (a part of email or name would suffice): (press ENTER to skip this criteria) "
+SEARCH_PROMPT1 = "Please enter any part of the %s of email: (press ENTER to skip this criteria)"
+NO_TXT_AVAIL = "\n### No Text Available for This Email. ###"
+NO_TITLE = "(Untitled Email)"
+
+PROC_ORIGINAL = ("Processing original message, please wait...\n\n" + 
+        "Compose Reply Message:")
+ERR_PARSING = "\n An error occured when parsing HTML message.\n"
+FROM_HTML = "\n (Following text is parsed from HTML message.) \n"
+UNDISCLOSED_RCP = "Undisclosed Recipients"
+
+Q_LIST = ["quit", "q", "exit", "x", ":q", "bye"]
+H_LIST = ["help", "h", "--help", "?", "??", "help!"]
+I_LIST = ["inbox", "i", "mails", "check mail", "check email"]
+S_LIST = ["search", "find", "f", "s", "filter"]
+N_LIST = ["new", "newmail", "compose", "compose email", "compose mail", "n", "nm", "write", "send"]
+LFDR_LIST = ["dir", "ls", "folders"]
+NOT_UNDSTD = ("Sorry, Jimmy-Bot does not understand your command. Try" + 
+              " some others maybe? :-)")
+EML_INDICATION = ["mails", "mail", "email", "emails", "all mails", "all emails", "all messages"]
