@@ -67,6 +67,6 @@ def init():
     curses.wrapper(runWithSession)
     MainSession.close()
 
-try: init()
-except: sys.exit(THANK_YOU_MSG)
+init()
+sys.exit(THANK_YOU_MSG)
 

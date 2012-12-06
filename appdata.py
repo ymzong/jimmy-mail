@@ -22,6 +22,7 @@ WELCOME_MSG[2] = "Carnegie Mellon University SCS '16."
 WELCOME_MSG[3] = "y z o n g @ c m u . e d u"
 WELCOME_MSG[4] = " "
 WELCOME_MSG[5] = "Press ENTER or SPACE to continue..."
+HLP_INSTR = "Up/Down/PgUp/PgDn - Scroll through help   q - Quit to Main Menu"
 
 EMAIL_PROMPT = "Please enter your email address: "
 EMAIL_INVALID = "Email invalid. Please enter again. (Enter \"q\" to quit)"

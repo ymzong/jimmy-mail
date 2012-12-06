@@ -21,7 +21,8 @@ from email.utils import parseaddr as ParseAddr
 keyResponse = dict()
 keyResponse["WELCOME"] = [10, ord("q")]   # Enter
 keyResponse["MAIN_MENU"] = [ord("0"), ord("1"), ord("2"),
-                            ord("s"), ord("h"), ord("h")]
+                            ord("s"), ord("h"), ord("q"),
+                            ord("S"), ord("H"), ord("Q")]
 EML_LST_GEN = [ord('q'),ord('Q'),curses.KEY_UP,curses.KEY_DOWN,
             curses.KEY_PPAGE,curses.KEY_NPAGE]
 EML_LST_EDT = [ord("D"), ord("r"), ord("R"), ord("F"), ord("f")]
@@ -54,7 +55,7 @@ def respondMainMenu(stdscr, MainSession, Appdata, event):
         smartCommand(stdscr, MainSession, Appdata, event)
     if event in [ord("h"), ord("H"), ord("1")]:
         displayHelp(stdscr)
-    if event in [ord("q"), ord("Q"), ord("2")]:
+    if event in [ord("2"), ord("q"), ord("Q")]:
         exitApp(stdscr)
 
 ############################# DRAW SCREEN UNIT #########################
@@ -403,7 +404,7 @@ def viewEmail(MainSession, emlData, msgNOs, currentSelect, stdscr):
     (flag,event,currentTop)=(True, None, 0)
     while flag:
         maxY, maxX = stdscr.getmaxyx()
-        maxLen = len(txtMsg) / (maxX - 2) + txtMsg.count("\n") + 1
+        maxLen = getMaxLen(txtMsg.split("\n"), maxX)
         createMailGraphics(MainSession, emlData, txtMsg, stdscr, currentSelect, currentTop)
         event = stdscr.getch()      # Get Keyboard Inputs
         if event in [ord('q'),ord('Q'),curses.KEY_UP,curses.KEY_DOWN,curses.KEY_PPAGE,curses.KEY_NPAGE]:
@@ -412,14 +413,14 @@ def viewEmail(MainSession, emlData, msgNOs, currentSelect, stdscr):
             (emlData, msgNOs) = modifyEml(MainSession, emlData, msgNOs, currentSelect, event, stdscr)
             if event == ord("D"): flag = False   # Quit Email Viewing
 
-#     Email textx are displayed on a "Pad" of curses, which supports
+#     Email texts are displayed on a "Pad" of curses, which supports
 # scrolling options.
 def createMailGraphics(MainSession, emlData, txtMsg, stdscr, currentSelect, currentTop):
-    maxY, maxX = stdscr.getmaxyx();
-    stdscr.clear();
+    maxY, maxX = stdscr.getmaxyx()
+    stdscr.clear()
     stdscr.box()
-    stdscr.addstr(0,max(0,(maxX-len(JIMMY_MAIL))/2),JIMMY_MAIL);
-    stdscr.refresh();
+    stdscr.addstr(0,max(0,(maxX-len(JIMMY_MAIL))/2),JIMMY_MAIL)
+    stdscr.refresh()
     coord = (6, 1, maxY - 4, maxX - 1)
     maxLen = len(txtMsg) / (maxX - 2) + txtMsg.count("\n") + 1
     pad = curses.newpad(maxLen, maxX - 2)
@@ -428,6 +429,46 @@ def createMailGraphics(MainSession, emlData, txtMsg, stdscr, currentSelect, curr
     drawBasicInfo(MainSession, emlData, currentSelect, stdscr)
     try: pad.addstr(0,0, txtMsg); pad.refresh(currentTop, 0, *coord)
     except: pass
+
+def getMaxLen(msgList, maxX):
+    maxLen = -2
+    for line in msgList:
+        maxLen += len(line) / (maxX - 2) + 1
+    return max(maxLen, 0)
+
+def displayHelp(stdscr):
+    stdscr.clear();
+    maxY, maxX = stdscr.getmaxyx();
+    stdscr.box()
+    stdscr.addstr(0,max(0,(maxX-len(JIMMY_MAIL))/2),JIMMY_MAIL)
+    stdscr.refresh()
+    flag, currentTop = True, 0
+    # Read data from readme file.
+    with open('readme.txt', 'r') as readmeF:
+        textList = readmeF.readlines()
+    maxLen = getMaxLen(textList, maxX)
+    while flag:
+        maxY, maxX = stdscr.getmaxyx()
+        drawHelp(stdscr, textList, currentTop)
+        event = stdscr.getch()
+        (flag,currentTop) = respondMsgPg(flag,event,currentTop,maxY,maxLen)
+    return
+
+def drawHelp(stdscr, textList, currentTop):
+    maxY, maxX = stdscr.getmaxyx()
+    stdscr.clear()
+    stdscr.box()
+    stdscr.addstr(0,max(0,(maxX-len(JIMMY_MAIL))/2),JIMMY_MAIL)
+    stdscr.addstr(maxY - 2, max(0, (maxX - len(HLP_INSTR)) / 2), HLP_INSTR)
+    stdscr.refresh()
+    coord = (1, 1, maxY - 3, maxX - 1)
+    maxLen = 10
+    for line in textList:
+        maxLen += len(line) / (maxX - 2) + 1
+    pad = curses.newpad(maxLen, maxX - 2)
+    pad.clear()
+    pad.addstr(0,0, "".join(textList));
+    pad.refresh(currentTop, 0, *coord)
 
 # This function responds to Message Scrolling key strokes.
 def respondMsgPg(flag, event, currentTop, maxY, maxLen):
