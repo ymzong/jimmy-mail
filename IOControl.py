@@ -17,7 +17,7 @@ locale.setlocale(locale.LC_ALL,"en_US.UTF-8")
 from html2text import html2text
 from email.utils import parseaddr as ParseAddr
 
-############################# KEY RESPOND UNIT #########################
+############################# KEY RESPOND CONSTANTS #########################
 keyResponse = dict()
 keyResponse["WELCOME"] = [10, ord("q")]   # Enter
 keyResponse["MAIN_MENU"] = [ord("0"), ord("1"), ord("2"),
@@ -27,6 +27,8 @@ EML_LST_GEN = [ord('q'),ord('Q'),curses.KEY_UP,curses.KEY_DOWN,
             curses.KEY_PPAGE,curses.KEY_NPAGE]
 EML_LST_EDT = [ord("D"), ord("r"), ord("R"), ord("F"), ord("f")]
 EML_LST_GO = [ord(" "), 10, 13, ord("\n"), curses.KEY_ENTER]
+
+
 # This is the key responder for Welcome Mode and Main Menu Mode (simple).
 def keyRespond(stdscr, MainSession, Appdata, event):
     if Appdata.mode[0] == "WELCOME":
@@ -397,8 +399,7 @@ def viewEmail(MainSession, emlData, msgNOs, currentSelect, stdscr):
     maxY, maxX = stdscr.getmaxyx(); stdscr.box()
     stdscr.addstr(0,max(0,(maxX-len(JIMMY_MAIL))/2),JIMMY_MAIL)
     stdscr.addstr(min(2,maxY-1),max(0,(maxX-len(PLEASE_WAIT))/2),
-            PLEASE_WAIT)
-    stdscr.refresh();
+            PLEASE_WAIT); stdscr.refresh();
     txtMsg = processCodec(Proc(MainSession.IMAP.fetchMsg(\
             emlData[3][currentSelect])[1][0][1])) + EOM   # Retrieve message.
     (flag,event,currentTop)=(True, None, 0)
@@ -407,10 +408,11 @@ def viewEmail(MainSession, emlData, msgNOs, currentSelect, stdscr):
         maxLen = getMaxLen(txtMsg.split("\n"), maxX)
         createMailGraphics(MainSession, emlData, txtMsg, stdscr, currentSelect, currentTop)
         event = stdscr.getch()      # Get Keyboard Inputs
-        if event in [ord('q'),ord('Q'),curses.KEY_UP,curses.KEY_DOWN,curses.KEY_PPAGE,curses.KEY_NPAGE]:
+        if event in EML_LST_GEN:
             (flag,currentTop)=respondMsgPg(flag,event,currentTop,maxY,maxLen)
-        elif event in [ord("D"), ord("r"), ord("R"), ord("F"), ord("f")]:
-            (emlData, msgNOs) = modifyEml(MainSession, emlData, msgNOs, currentSelect, event, stdscr)
+        elif event in EML_LST_EDT:
+            (emlData, msgNOs) = modifyEml(MainSession, emlData, msgNOs,
+                    currentSelect, event, stdscr)
             if event == ord("D"): flag = False   # Quit Email Viewing
 
 #     Email texts are displayed on a "Pad" of curses, which supports
@@ -422,19 +424,20 @@ def createMailGraphics(MainSession, emlData, txtMsg, stdscr, currentSelect, curr
     stdscr.addstr(0,max(0,(maxX-len(JIMMY_MAIL))/2),JIMMY_MAIL)
     stdscr.refresh()
     coord = (6, 1, maxY - 4, maxX - 1)
-    maxLen = len(txtMsg) / (maxX - 2) + txtMsg.count("\n") + 1
+    maxLen = len(txtMsg) / (maxX - 2) + txtMsg.count("\n") + 2
     pad = curses.newpad(maxLen, maxX - 2)
     pad.clear()
     pad.refresh(currentTop, 0, *coord)
-    drawBasicInfo(MainSession, emlData, currentSelect, stdscr)
+    try: drawBasicInfo(MainSession, emlData, currentSelect, stdscr)
+    except: pass
     try: pad.addstr(0,0, txtMsg); pad.refresh(currentTop, 0, *coord)
     except: pass
 
 def getMaxLen(msgList, maxX):
-    maxLen = -2
+    maxLen = -2 
     for line in msgList:
         maxLen += len(line) / (maxX - 2) + 1
-    return max(maxLen, 0)
+    return max(maxLen, 1)
 
 def displayHelp(stdscr):
     stdscr.clear();
@@ -493,8 +496,9 @@ def drawBasicInfo(MainSession, emlData, currentIndex, stdscr):
             emlSize[currentIndex])
     stdscr.addstr(1,1,"Date: " + currentEml[0]["Date"])
     stdscr.addstr(2,1,"From: " + currentEml[0]["From"][:maxX - 2])
-    stdscr.addstr(3,1,"To: " + (currentEml[0]["To"].replace("\r","").\
+    try: stdscr.addstr(3,1,"To: " + (currentEml[0]["To"].replace("\r","").\
             replace("\n", "")[:maxX - 6] or UNDISCLOSED_RCP))
+    except: stdscr.addstr(3,1,"To: " + MLF_FRM)
     stdscr.addstr(4,1,"Subject: " + currentEml[0]["Subject"].\
             replace("\r","").replace("\n", "")[:maxX - 11] or NO_TITLE)
     stdscr.addstr(5,1,"*"*(2 * maxX / 3))

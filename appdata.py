@@ -22,7 +22,7 @@ WELCOME_MSG[2] = "Carnegie Mellon University SCS '16."
 WELCOME_MSG[3] = "y z o n g @ c m u . e d u"
 WELCOME_MSG[4] = " "
 WELCOME_MSG[5] = "Press ENTER or SPACE to continue..."
-HLP_INSTR = "Up/Down/PgUp/PgDn - Scroll through help   q - Quit to Main Menu"
+HLP_INSTR = "Up/Down/PgUp/PgDn - Scroll through Help   q - Quit to Main Menu"
 
 EMAIL_PROMPT = "Please enter your email address: "
 EMAIL_INVALID = "Email invalid. Please enter again. (Enter \"q\" to quit)"
@@ -78,7 +78,7 @@ INSTRUCT1 = [("Arrow Keys -  Move thru Email List   f - Flag/Unflag Msg   " +
 INSTRUCT_MSG = ["Arrow Keys - Move along Email   f - Flag/Unflag Msg",
                 ("D (CAPITAL D) - Delete Mail   r - Reply Email   " +
                 "q - Quit to Parent Folder")]
-EOM = "### END OF EMAIL TEXT ###"
+EOM = "\n### END OF EMAIL TEXT ###"
 
 INBOX_ERR = "Error occured when reading Inbox folder %s"
 INBOX_EPT = "The mail folder is empty!"
@@ -139,4 +139,4 @@ NOT_UNDSTD = ("Sorry, Jimmy-Bot does not understand your command. Try" +
               " some others maybe? :-)")
 EML_INDICATION = ["mails", "mail", "email", "emails", "all mails",
                 "all emails", "all messages"]
-
+MLF_FRM = "Undisclosed Recipients (malformed recipient list)"
