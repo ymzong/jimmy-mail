@@ -230,15 +230,15 @@ def confirmDraft(MainSession, EmailTo, EmailMIME):
         if choice == "y":
             if MainSession.SentFolderName == None:
                 MainSession.SentFolderName = MainSession.IMAP.setSentFolder()
-            if MainSession.SentFolderName == "":
-                print SND_FDR_NIL
+            if MainSession.SentFolderName == "": print SND_FDR_NIL
             else:
                 try: MainSession.IMAP.session.append(\
                         MainSession.SentFolderName, "(\\Seen)",
                         imaplib.Time2Internaldate(time.time()),
                         EmailMIME.as_string())
                 except Exception: print SAVE_ERR % MainSession.SentFolderName
-                else: print SAVE_SUCC % MainSession.SentFolderName
+                else: 
+                    print SAVE_SUCC % MainSession.SentFolderName; raw_input()
             break
         elif choice == "n": break
         else: choice = raw_input(Y_OR_N)

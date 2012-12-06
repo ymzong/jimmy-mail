@@ -25,7 +25,7 @@ Carnegie Mellon University '16
     is the "user-friendliness", which initiates the idea of "Jimmy-Bot"
     human-language interpretation function. 
 
-2. CODE STRUCTURE:
+3. CODE STRUCTURE:
     This program's code structure is mainly as follows:
         - main.py: the main 'executable' code that is triggered when running;
         - mailbox.py: defines the extension of Python's IMAP and SMTP class,
@@ -47,7 +47,7 @@ Carnegie Mellon University '16
           text. The script is written by Aaron Swartz.
     All sources other than the last file are my personal work.
 
-3. RUNNING OPTIONS:
+4. RUNNING OPTIONS:
     ./run.sh                        Default mode for Jimmy-Mail
     ./run.sh EMAIL_ADDRESS          Call Jimmy-Mail with designated email
     ./run.sh help                   Display help for calling parameters
@@ -57,7 +57,7 @@ Carnegie Mellon University '16
     (Note 2: More parameter options will be supported, such as IMAP/SMTP
              server auto-completion)
 
-4. PROGRAM FUNCTIONS:
+5. PROGRAM FUNCTIONS:
     - Command Line Interface:
         * Compose Email: enter "n", "nm", "compose", etc. to command line.
         * Check Inbox: enter "i", "inbox", etc to command line.
@@ -81,7 +81,7 @@ Carnegie Mellon University '16
         * Feel free to try some combinations!
         (Note: Jimmy-Bot will be smarter in the future)
 
-5. TECHNICAL DETAILS:
+6. TECHNICAL DETAILS:
     - Python's imaplib and smtplib libraries are used when communicating with
       email servers. All flags and commands are strictly compatible with the
       IMAP standards outlined in RFC3501, which can be found at:
@@ -93,7 +93,7 @@ Carnegie Mellon University '16
     - Non-ASCII (like UTF-8) headers (like in French, Chinese and Japanese)
       are supported for display.
 
-6. KNOWN ISSUES:
+7. KNOWN ISSUES:
     - Because this email client retrieves all emails of a given list at once,
       it can be slow (>10s) for more than 300 messages per list. Effort will
       be made to retrieve message headers page by page.
@@ -101,9 +101,9 @@ Carnegie Mellon University '16
       still appear for Chinese, Korean and Japanese characters. Those issues
       will be fixed when possible.
 
-7. ACKNOWLEDGEMENTS:
+8. ACKNOWLEDGEMENTS:
     - First of all, this whole project is sincerely dedicated to Sunny C.,
-      whose support and understanding enables me to finalize the project;
+      whose support and understanding enabled me to finalize the project;
     - Thanks Professor David Kosbie for his wonderful introductory course of
       Python and his suggestions for my project;
     - And, thanks my Project Mentor Disha Bora who tracked the progress of
@@ -111,5 +111,4 @@ Carnegie Mellon University '16
       this program;
     - At last, the thank goes to Aaron Swartz, whose html2text module is a
       great help for displaying HTML-only messages.
-
 
