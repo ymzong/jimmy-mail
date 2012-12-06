@@ -533,6 +533,9 @@ def replyEmailApp(MainSession, emlData, currentSelect, stdscr):
     msgCodec = Proc(MainSession.IMAP.fetchMsg(\
             emlData[3][currentSelect])[1][0][1])        # Fetch original Msg
     toSendMsg = constructReply(MainSession, msgCodec)   # Gather reply MIME
+    if toSendMsg == None:        # User cancelled sending
+        curses.reset_prog_mode(); stdscr.clear(); stdscr.refresh()
+        return emlData
     try: MainSession.SMTP.session.sendmail(toSendMsg["From"], 
             ParseAddr(toSendMsg["To"])[1], toSendMsg.as_string())
     except Exception as err: print SEND_ERR % err; raw_input()
@@ -556,6 +559,7 @@ def constructReply(MainSession, msgCodec):
     print "To: " + ",".join([newMsg["To"]])
     print "Subject: " + newMsg["Subject"]
     newText = getEmailText()    # Gain the main text of email.
+    if newText == None: return None
     originalText = ("> " + processCodec(msgCodec)).replace("\n","\n> ") 
     transitionText = "\n\n> On %s, %s wrote:\n" % (msgCodec["Date"],
             msgCodec["From"])
